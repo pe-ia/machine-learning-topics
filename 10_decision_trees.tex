@@ -1,0 +1,321 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Decision Trees}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction and Example}
+\begin{itemize}
+    \item \textbf{Definition of a Decision Tree:}
+    \begin{itemize}
+        \item A flowchart-like structure used for decision-making and predictive modeling.
+        \item Each internal node (decision node) represents a test on a feature.
+        \item Each branch represents the outcome of a test.
+        \item Each leaf node (terminal node) represents a final class (for classification) or predicted value (for regression).
+    \end{itemize}
+
+    \item \textbf{Core Concepts:}
+    \begin{itemize}
+        \item Data is split recursively based on feature values.
+        \item Impurity (or variance) measures guide how to split the data.
+        \item Stopping criteria and pruning help avoid overfitting.
+    \end{itemize}
+
+    \item \textbf{Ongoing Example: Loan Approval}
+    \begin{itemize}
+        \item \textbf{Classification Task:} Decide whether a loan should be approved (\textit{approve} vs. \textit{reject}).
+        \item \textbf{Regression Task:} If approved, predict the interest rate (a continuous value) based on applicant features.
+        \item This scenario will be references throughout the sections to illustrate how decision trees work in both classification and regression contexts.
+    \end{itemize}
+\end{itemize}
+
+\section{Decision Tree Terminology}
+\begin{itemize}
+    \item \textbf{Root Node:} Topmost node representing the entire dataset.
+    \item \textbf{Internal (Decision) Nodes:} Nodes that represent tests on features (e.g., income > \$50{,}000).
+    \item \textbf{Leaf Nodes (Terminal Nodes):} Final predictions (e.g., \textit{approve} or \textit{reject} a loan, or a predicted interest rate).
+    \item \textbf{Branches (Edges):} Connections between nodes, representing the outcome of a test.
+    \item \textbf{Splitting:} The process of dividing a node into sub-nodes.
+    \item \textbf{Parent and Child Nodes:} A node that splits is a parent, and the resulting nodes are children.
+    \item \textbf{Subtree:} A portion of the tree consisting of a node and its descendants.
+\end{itemize}
+
+\section{How Decision Trees Work}
+
+\subsection{Structure and Prediction}
+\begin{itemize}
+    \item \textbf{Structure:}
+    \begin{itemize}
+        \item Tree-like model, where each question (feature test) splits the data.
+        \item In the loan approval example, a node might split by ``applicant credit score'' or ``income level.''
+    \end{itemize}
+
+    \item \textbf{Prediction:}
+    \begin{itemize}
+        \item To predict, take a new sample and follow the decision rules (branches) according to the feature values.
+        \item Continue traversing until you reach a leaf node.
+        \item The leaf node's value is the prediction (e.g., \textit{approve} vs. \textit{reject}, or a numerical interest rate).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Splitting the Data}
+\begin{itemize}
+    \item \textbf{Definition:}
+    \begin{itemize}
+        \item Partition the dataset into subsets (child nodes) based on a feature test.
+        \item In the loan example, you could split on ``income'' (e.g., income > \$50{,}000 vs. \(\leq\$50{,}000\)).
+    \end{itemize}
+
+    \item \textbf{Classification Criterion (Information Gain):}
+    \[
+    IG(T, X) = H(T) \;-\; \sum_{\text{child } v} P(v) \times H(T_v),
+    \]
+    \begin{itemize}
+        \item \(T\) = entire dataset at a node,
+        \item \(T_v\) = subset of \(T\) corresponding to outcome \(v\),
+        \item \(H(\cdot)\) = entropy measure,
+        \item \(P(v)\) = proportion of samples that go to branch \(v\).
+        \item \textbf{Choose the split} \(X\) with the highest \(IG\).
+        \item \textbf{Entropy:}
+        \[
+        H(p_1) = -\,p_1 \log_2(p_1) \;-\; (1 - p_1)\,\log_2\bigl(1 - p_1\bigr),
+        \]
+        \begin{itemize}
+            \item \(p_1\) = fraction of positive examples (e.g., approved loans).
+            \item A higher \(H\) indicates higher impurity.
+    \end{itemize}
+
+    \end{itemize}
+
+    \item \textbf{Regression Criterion (Variance Reduction):}
+    \[
+    VR = \mathrm{Var}(T) \;-\; \sum_{\text{child } v} P(v) \times \mathrm{Var}(T_v).
+    \]
+    \begin{itemize}
+        \item \(\mathrm{Var}(T)\) = variance of target values at node \(T\).
+        \item \textbf{Choose the split} that yields the largest reduction in variance.
+    \end{itemize}
+
+    \item \textbf{Loan Example (Classification) Split:}
+    \begin{itemize}
+        \item \textit{Split 1}: High income vs. not high income.
+        \item \textit{Split 2}: Good credit vs. poor credit (further splits).
+        \item Use information gain to decide which split reduces entropy the most.
+    \end{itemize}
+
+    \item \textbf{Loan Example (Regression) Split:}
+    \begin{itemize}
+        \item Predict interest rate as a continuous value.
+        \item \textit{Split 1}: e.g., credit score > 700 vs. \(\leq 700\).
+        \item Compute variance reduction of the interest rate in each branch.
+        \item Choose the best split.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Building the Tree}
+\begin{itemize}
+    \item Start with the full dataset at the root node.
+    \item At each node:
+    \begin{itemize}
+        \item Try possible splits on all features.
+        \item For classification: choose the split that maximizes information gain.
+        \item For regression: choose the split that maximizes variance reduction.
+        \item Create child nodes based on the chosen split.
+    \end{itemize}
+    \item Recursively repeat the process for each child node until a stopping condition is met.
+    \item \textbf{Outcome:} A piecewise constant model (for regression) or a series of decision rules (for classification).
+\end{itemize}
+
+\section{Overfitting, Pruning, and Stopping Conditions}
+
+\subsection{Overfitting}
+\begin{itemize}
+    \item \textbf{Definition:}
+    \begin{itemize}
+        \item The tree becomes too specialized to training data and captures noise rather than general trends.
+        \item In the loan approval example, it might memorize very specific applicant features that do not generalize.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Stopping Conditions}
+\begin{itemize}
+    \item \textbf{Purity-Based}: Stop when nodes are pure (all approved or all rejected).
+    \item \textbf{Minimum Improvement}: Stop when no split significantly reduces impurity or variance.
+    \item \textbf{Minimum Samples per Node}: Stop if fewer than a certain number of samples remain.
+    \item \textbf{Maximum Depth}: Set a limit on how many levels the tree can grow.
+    \item \textbf{Maximum Number of Nodes}: Restrict the total number of nodes.
+\end{itemize}
+
+\subsection{Pruning}
+\begin{itemize}
+    \item \textbf{Definition:}
+    \begin{itemize}
+        \item A technique to reduce overfitting by removing branches that offer little predictive power.
+    \end{itemize}
+
+    \item \textbf{Types of Pruning:}
+    \begin{itemize}
+        \item \textbf{Pre-Pruning (Early Stopping)}:
+        \begin{itemize}
+            \item Halt tree growth early if further splits do not meet certain criteria.
+        \end{itemize}
+        \item \textbf{Post-Pruning}:
+        \begin{itemize}
+            \item Grow the full tree, then remove branches that do not significantly improve performance based on cost-complexity or validation error.
+        \end{itemize}
+    \end{itemize}
+
+    \item \textbf{Benefit:}
+    \begin{itemize}
+        \item Simplifies the model and improves generalization.
+        \item In the loan example, post-pruning might remove a branch splitting on a very rare applicant feature.
+    \end{itemize}
+\end{itemize}
+
+\section{Bias, Variance, and Model Evaluation}
+\begin{itemize}
+    \item \textbf{Bias-Variance in Decision Trees:}
+    \begin{itemize}
+        \item \textbf{Low Bias:} They can fit complex decision boundaries.
+        \item \textbf{High Variance:} Small changes in data can lead to large changes in the tree structure.
+    \end{itemize}
+
+    \item \textbf{Reducing Variance:}
+    \begin{itemize}
+        \item Limit tree depth or size (stopping conditions).
+        \item Prune the tree (post-pruning).
+        \item Use ensemble methods (Random Forests, Gradient Boosting).
+    \end{itemize}
+
+    \item \textbf{Model Evaluation Techniques:}
+    \begin{itemize}
+        \item Train/validation/test split.
+        \item Cross-validation for more robust error estimates.
+        \item Evaluate classification accuracy or regression error metrics (e.g., MSE, MAE).
+    \end{itemize}
+\end{itemize}
+
+\section{Advantages and Disadvantages of Decision Trees}
+
+\subsection{Advantages}
+\begin{itemize}
+    \item \textbf{Interpretability:}
+    \begin{itemize}
+        \item Easy to visualize and explain to non-technical stakeholders (e.g., straightforward if you want to see why a loan was approved or rejected).
+    \end{itemize}
+    \item \textbf{Versatility:}
+    \begin{itemize}
+        \item Handles both numerical and categorical features.
+        \item Used for classification or regression tasks.
+    \end{itemize}
+    \item \textbf{Feature Selection:}
+    \begin{itemize}
+        \item Performs implicit feature selection by only using relevant features in splits.
+    \end{itemize}
+    \item \textbf{Invariance to Scaling or Shifting:}
+    \begin{itemize}
+        \item Normalizing or centering features typically does not affect splits.
+    \end{itemize}
+    \item \textbf{Robustness to Outliers:}
+    \begin{itemize}
+        \item Splits are based on thresholds; extreme values may not drastically affect thresholds.
+    \end{itemize}
+    \item \textbf{Relatively Fast to Train on Moderate Data Sizes.}
+\end{itemize}
+
+\subsection{Disadvantages}
+\begin{itemize}
+    \item \textbf{High Variance:}
+    \begin{itemize}
+        \item Sensitive to small perturbations in training data.
+    \end{itemize}
+    \item \textbf{Overfitting:}
+    \begin{itemize}
+        \item Without pruning or stopping, trees can memorize the noise.
+    \end{itemize}
+    \item \textbf{Axis-Aligned Boundaries:}
+    \begin{itemize}
+        \item They cannot easily capture diagonal or more complex boundaries without many splits.
+    \end{itemize}
+    \item \textbf{Rotation Sensitivity:}
+    \begin{itemize}
+        \item A simple rotation of the feature space can affect splits drastically.
+    \end{itemize}
+    \item \textbf{Computational Cost on Very Large Datasets:}
+    \begin{itemize}
+        \item Repeatedly finding best splits can be expensive if the feature set is large.
+    \end{itemize}
+\end{itemize}
+
+\section{Practical Considerations}
+
+\subsection{Handling Missing Data (Surrogate Splits)}
+\begin{itemize}
+    \item \textbf{Definition:}
+    \begin{itemize}
+        \item When the primary splitting feature is missing for some samples, a surrogate feature is used.
+    \end{itemize}
+    \item \textbf{Benefit:}
+    \begin{itemize}
+        \item Allows consistent splitting during both training and prediction.
+        \item In the loan example, if ``income'' is missing, we might use ``credit score'' if it correlates well with the original split.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Feature Encoding}
+\begin{itemize}
+    \item \textbf{Categorical Features:}
+    \begin{itemize}
+        \item One-hot encoding can transform categories into multiple binary features.
+        \item Example: \textit{employment type} = \{``full-time'', ``part-time'', ``self-employed''\} can become three features.
+    \end{itemize}
+    \item \textbf{Why It Matters:}
+    \begin{itemize}
+        \item Decision trees can then split on these binary indicators the same way they split on any other feature.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Ensemble Methods}
+\begin{itemize}
+    \item \textbf{Random Forests:}
+    \begin{itemize}
+        \item Collection of trees built on bootstrapped data and random subsets of features.
+        \item Reduces variance by averaging multiple trees.
+    \end{itemize}
+    \item \textbf{Gradient Boosting:}
+    \begin{itemize}
+        \item Sequentially build trees to reduce errors from previous trees.
+        \item Often yields high accuracy but can be more complex to tune.
+    \end{itemize}
+\end{itemize}
+
+\section{When to Use Decision Trees}
+\begin{itemize}
+    \item \textbf{Structured Data:}
+    \begin{itemize}
+        \item Especially effective on data that fits a tabular format (e.g., loan application forms).
+    \end{itemize}
+    \item \textbf{Not Ideal for Unstructured Data:}
+    \begin{itemize}
+        \item For images, audio, or text, other methods (e.g., neural networks) typically perform better.
+    \end{itemize}
+    \item \textbf{When Interpretability is Important:}
+    \begin{itemize}
+        \item Stakeholders may want a clear reasoning path for decisions (e.g., regulators for loan approvals).
+    \end{itemize}
+\end{itemize}
+
+\end{document}

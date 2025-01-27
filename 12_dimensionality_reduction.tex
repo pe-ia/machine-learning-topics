@@ -1,0 +1,354 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Dimensionality Reduction}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\begin{itemize}
+    \item \textbf{Definition of Dimensionality Reduction}
+    \begin{itemize}
+        \item Process of reducing the number of variables (features) in a dataset while preserving essential information.
+        \item Two main categories:
+        \begin{itemize}
+            \item \emph{Feature Selection:} Selecting a subset of the original features.
+            \item \emph{Feature Extraction:} Transforming the data into a lower-dimensional space.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Motivation and Benefits}
+    \begin{itemize}
+        \item Simplifies data for easier visualization and interpretation.
+        \item Reduces computation and storage requirements.
+        \item Helps mitigate overfitting by removing irrelevant or redundant features.
+        \item Alleviates the ``curse of dimensionality,'' where high-dimensional data is often sparse and non-representative.
+    \end{itemize}
+    \item \textbf{Example Introduced: Disease Diagnosis}
+    \begin{itemize}
+        \item Imagine a medical scenario with hundreds of biomarkers (e.g.\ genes, proteins).
+        \item Dimensionality reduction can identify the most informative biomarkers or transform them into fewer explanatory factors.
+        \item Throughout this document, references to disease diagnosis will illustrate how dimensionality reduction helps.
+    \end{itemize}
+    \item \textbf{Analogy: Compressing an Image}
+    \begin{itemize}
+        \item Similar to converting a high-resolution photograph into a thumbnail.
+        \item The thumbnail retains essential features while using fewer pixels.
+        \item Illustrates how key information can be preserved in fewer dimensions.
+    \end{itemize}
+\end{itemize}
+
+\section{Why Perform Dimensionality Reduction?}
+\begin{itemize}
+    \item \textbf{Overfitting Prevention}
+    \begin{itemize}
+        \item Redundant or irrelevant features can cause overfitting.
+        \item Reducing dimensionality can help models generalize better to new data.
+    \end{itemize}
+    \item \textbf{Visualization}
+    \begin{itemize}
+        \item High-dimensional data is often reduced to 2D or 3D for exploratory data analysis.
+        \item Helps in identifying clusters or patterns that are hard to see in high dimensions.
+    \end{itemize}
+    \item \textbf{Computation and Storage}
+    \begin{itemize}
+        \item Fewer features mean faster model training and reduced storage needs.
+        \item Important for large-scale applications (e.g.\ big genomic data in disease diagnosis).
+    \end{itemize}
+    \item \textbf{Alleviating the Curse of Dimensionality}
+    \begin{itemize}
+        \item In very high-dimensional spaces, data points can be extremely far apart.
+        \item Reducing dimensions makes it more likely that data adequately represents the underlying distribution.
+    \end{itemize}
+\end{itemize}
+
+\section{Overview of Techniques}
+\begin{itemize}
+    \item \textbf{Feature Selection}
+    \begin{itemize}
+        \item Retains a subset of the original features.
+        \item \textbf{Methods}
+        \begin{itemize}
+            \item \emph{Filter Methods:} Use statistical measures (e.g.\ correlation, mutual information).
+            \item \emph{Wrapper Methods:} Evaluate subsets based on model performance (e.g.\ forward selection).
+            \item \emph{Embedded Methods:} Integrate selection into model training (e.g.\ Lasso regression).
+        \end{itemize}
+        \item \textbf{Example in Disease Diagnosis}
+        \begin{itemize}
+            \item Identify the most relevant biomarkers to distinguish between healthy and diseased patients.
+            \item Reduces analysis complexity while preserving classification accuracy.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Feature Extraction}
+    \begin{itemize}
+        \item Creates new features (transformations) in a lower-dimensional space.
+        \item \textbf{Techniques}
+        \begin{itemize}
+            \item \textbf{Principal Component Analysis (PCA):} Finds orthogonal axes that capture maximum variance.
+            \item \textbf{t-SNE:} Nonlinear technique optimizing local structure for 2D/3D visualization.
+            \item \textbf{Autoencoders:} Neural networks that learn efficient encoding and decoding of data.
+        \end{itemize}
+        \item \textbf{Example in Disease Diagnosis}
+        \begin{itemize}
+            \item Transform hundreds of biomarker measurements into a few principal components or autoencoder outputs that capture key variance.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+\section{Principal Component Analysis (PCA)}
+
+PCA is a way to re-express your data in a new coordinate system such that the greatest amount of variability in the data is captured in the first few directions. This “reorientation” simplifies many problems, whether it's reducing noise, visualizing high-dimensional data, or compressing information.
+
+\subsection{The Objective of PCA}
+
+Imagine you have data in a matrix \(X\) (with \(n\) observations and \(p\) features). Here’s a look at the steps:
+
+\begin{enumerate}
+    \item \textbf{Center the Data:}  
+    Subtract the mean of each feature from the data so that every feature has mean \(0\). This centered version is denoted by \(\tilde{X}\).
+
+    \item \textbf{Compute the Covariance Matrix:}  
+    \[
+    S = \frac{1}{n-1} \tilde{X}^T\tilde{X}
+    \]
+    The covariance matrix \(S\) quantifies how pairs of features vary together. PCA uses this matrix to understand the structure (or ``spread'') of the data.
+
+    \item \textbf{Find the Principal Components via Eigen Decomposition:}  
+    We wish to find a direction (a unit vector \(\boldsymbol{a}_1\)) such that when the data is projected onto this direction, the variance is maximized. Mathematically, we solve:
+    \[
+    \operatorname{Var}\bigl(\boldsymbol{a}_1^T X\bigr) = \boldsymbol{a}_1^T S \, \boldsymbol{a}_1,
+    \]
+    subject to \(\|\boldsymbol{a}_1\| = 1\).
+
+    Using Lagrange multipliers, this optimization leads to:
+    \[
+    S \, \boldsymbol{a}_1 = \lambda_1 \, \boldsymbol{a}_1,
+    \]
+    which tells us that \(\boldsymbol{a}_1\) is an eigenvector of \(S\) and \(\lambda_1\) is its corresponding eigenvalue. The largest eigenvalue, \(\lambda_1\), indicates the direction with maximum spread.
+
+    \item \textbf{Extract Further Components:}  
+    After the first component, we find a second unit vector \(\boldsymbol{a}_2\) that maximizes the variance, with the additional requirement that it is orthogonal to \(\boldsymbol{a}_1\). This process gives:
+    \[
+    S \, \boldsymbol{a}_2 = \lambda_2 \, \boldsymbol{a}_2,
+    \]
+    where \(\lambda_2\) is the second largest eigenvalue. We continue this process to get all \(p\) components.
+\end{enumerate}
+
+\subsection{Interpreting the Eigendecomposition}
+
+After solving for the eigenvectors and eigenvalues of \(S\), you can write:
+\[
+S = A \, \Lambda \, A^T,
+\]
+where:
+\begin{itemize}
+    \item \(A\) is a matrix whose columns are the eigenvectors \(\boldsymbol{a}_1, \boldsymbol{a}_2, \dots, \boldsymbol{a}_p\). These vectors form a new set of axes that are orthogonal.
+    \item \(\Lambda\) is a diagonal matrix with eigenvalues \(\lambda_1 \ge \lambda_2 \ge \cdots \ge \lambda_p \ge 0\). Each eigenvalue indicates how much variance is captured along its corresponding eigenvector.
+\end{itemize}
+
+The fraction of total variance explained by the \(k\)-th principal component is:
+\[
+\frac{\lambda_k}{\lambda_1 + \lambda_2 + \cdots + \lambda_p}.
+\]
+
+\subsection{Transforming and Reconstructing Data}
+
+\begin{itemize}
+    \item \textbf{Transformation:}  
+    Once you have the eigenvectors, the \(k\)-th principal component of any observation \(\boldsymbol{x}\) is simply:
+    \[
+    z_k = \boldsymbol{a}_k^T \boldsymbol{x}.
+    \]
+    To reduce the dimensionality from \(p\) to \(m\) (\(m < p\)), collect the first \(m\) eigenvectors into a matrix \(W\) (size \(p \times m\)). The data can then be projected onto these components as:
+    \[
+    X_{\text{reduced}} = \tilde{X} W.
+    \]
+
+    \item \textbf{Reconstruction:}  
+    If you use all \(p\) components, you can perfectly reconstruct the original data:
+    \[
+    \boldsymbol{x} = \sum_{i=1}^{p} (\boldsymbol{a}_i^T \boldsymbol{x}) \, \boldsymbol{a}_i.
+    \]
+    However, if you use only the first \(m\) components, the reconstruction is an approximation:
+    \[
+    \tilde{\boldsymbol{x}} \approx \sum_{i=1}^{m} (\boldsymbol{a}_i^T \boldsymbol{x}) \, \boldsymbol{a}_i.
+    \]
+    This approximation is often good enough since most of the variance is captured by the first few components.
+\end{itemize}
+
+\subsection{Summary and Practical Insights}
+
+\begin{itemize}
+    \item \textbf{Noise Reduction and Efficiency:}  
+    Often, the later components (those with smaller eigenvalues) represent noise or less useful variability. By discarding them, you not only simplify your data but also potentially reduce the impact of noise.
+    
+    \item \textbf{Visualization:}  
+    By reducing your data to 2 or 3 dimensions, you can create visual plots that reveal underlying patterns which might be hidden in higher-dimensional space.
+
+    \item \textbf{Practical Example:}  
+    In medical research, imagine having 500 biomarkers for disease diagnosis. PCA can help compress these 500 features into a smaller set of principal components that still capture the critical differences among patients, simplifying diagnosis and analysis.
+\end{itemize}
+
+In summary, PCA reorients your data along directions of maximum variation, allowing you to focus on the most significant patterns and reduce the overall complexity.
+
+\section{Linear Discriminant Analysis (LDA)}
+
+LDA is a supervised method that is used for both classification and dimensionality reduction. It is similar to PCA in that it finds new axes to represent your data, but it does so with class labels in mind. In LDA, the goal is to find directions (linear discriminants) that best separate different classes.
+
+\subsection*{1. The Objective of LDA}
+
+\begin{itemize}
+    \item \textbf{Supervised Learning:}  
+    Unlike PCA, LDA uses the known class labels. Its goal is to find a projection of the data that maximizes the separation between different classes while keeping samples from the same class close together.
+    
+    \item \textbf{Maximizing Class Separability:}  
+    To achieve this, LDA aims to:
+    \begin{itemize}
+        \item \emph{Minimize Within-Class Variance:} Data points from the same class should be grouped tightly together.
+        \item \emph{Maximize Between-Class Variance:} The means of different classes should be as far apart as possible.
+    \end{itemize}
+\end{itemize}
+
+\subsection*{2. Within-Class and Between-Class Scatter Matrices}
+
+To quantify the idea of compactness within groups and separation between groups, LDA defines two important matrices:
+
+\begin{enumerate}
+    \item \textbf{Within-Class Scatter Matrix (\(S_W\)):}  
+    This matrix measures the scatter (or spread) of samples around their respective class means. It is calculated by summing the covariance matrices of each class (or, equivalently, summing the squared differences from each class mean). The objective is to make this scatter as small as possible.
+    
+    \item \textbf{Between-Class Scatter Matrix (\(S_B\)):}  
+    This matrix measures the scatter of the class means relative to the overall mean. A larger \(S_B\) indicates that the classes are more separated from each other, which is desirable.
+\end{enumerate}
+
+\subsection*{3. The Role of the Eigenvalue Problem}
+
+The central idea in LDA is to find a transformation that maximizes the ratio of between-class scatter to within-class scatter. Mathematically, this is done by solving the eigenvalue problem for the matrix:
+\[
+S_W^{-1} S_B.
+\]
+Here is what this means intuitively:
+\begin{itemize}
+    \item Think of \(S_W\) as a measure of “noise” or overlap within classes, and \(S_B\) as a measure of the “signal” or the distinctiveness of the classes.
+    \item The matrix \(S_W^{-1} S_B\) combines these two aspects in a way that highlights directions where the signal dominates the noise.
+    \item When we compute the eigenvectors of this matrix, the eigenvectors with the largest eigenvalues indicate the directions along which class separation is maximized.
+\end{itemize}
+If you are comfortable with eigenvectors and eigenvalues, consider them as the “best directions” that separate the classes when looking at the balance between within-class variability and between-class differences.
+
+\subsection*{4. Algorithmic Steps of LDA}
+
+An overview of how LDA works:
+\begin{enumerate}
+    \item \textbf{Compute \(S_W\):}  
+    For each class, calculate how much the observations spread around their class mean. Sum these values for all classes:
+    \[
+    S_W = \sum_{i=1}^c S_i,
+    \]
+    where \(c\) is the number of classes and \(S_i\) is the scatter matrix for the \(i\)th class.
+    
+    \item \textbf{Compute \(S_B\):}  
+    Calculate the scatter of class means relative to the overall mean:
+    \[
+    S_B = \sum_{i=1}^c N_i (\boldsymbol{\mu}_i - \boldsymbol{\mu})(\boldsymbol{\mu}_i - \boldsymbol{\mu})^T,
+    \]
+    where \(N_i\) is the number of observations in the \(i\)th class, \(\boldsymbol{\mu}_i\) is the mean of the \(i\)th class, and \(\boldsymbol{\mu}\) is the overall mean.
+    
+    \item \textbf{Solve the Eigenvalue Problem:}  
+    Find the eigenvectors and eigenvalues of \(S_W^{-1} S_B\). The eigenvectors (often called linear discriminants) indicate the directions that maximize class separability.
+    
+    \item \textbf{Select the Top Discriminant Directions:}  
+    Order the eigenvectors based on the magnitude of their eigenvalues. Larger eigenvalues correspond to better class separability. Typically, only a few of these directions are needed to capture the essential differences between classes.
+    
+    \item \textbf{Project the Data:}  
+    Finally, project the original data onto these new axes. The result is a lower-dimensional representation where classes are more easily distinguished.
+\end{enumerate}
+
+\section{Applications and Trade-Offs}
+\begin{itemize}
+    \item \textbf{Improving Model Performance}
+    \begin{itemize}
+        \item Eliminating noise and redundancy can boost generalization.
+        \item In disease diagnosis, focusing on fewer meaningful biomarkers can simplify the classification task.
+    \end{itemize}
+    \item \textbf{Visualization of High-Dimensional Data}
+    \begin{itemize}
+        \item PCA, LDA, t-SNE often used for 2D/3D plots.
+        \item Helpful to interpret clusters of patients or disease groups.
+    \end{itemize}
+    \item \textbf{Trade-Off: Information Loss}
+    \begin{itemize}
+        \item Discarding components or features inevitably risks losing some data details.
+        \item Must balance reducing dimensions with retaining essential variance or class separation.
+    \end{itemize}
+    \item \textbf{Algorithm Sensitivity and Complexity}
+    \begin{itemize}
+        \item Some methods (e.g.\ t-SNE, autoencoders) have hyperparameters and can be computationally intense.
+        \item Dimensionality reduction should be chosen based on data size, complexity, and downstream tasks.
+    \end{itemize}
+\end{itemize}
+
+\section{Conclusion}
+\begin{itemize}
+    \item \textbf{Key Takeaway}
+    \begin{itemize}
+        \item Dimensionality reduction is useful for making high-dimensional data tractable and interpretable.
+        \item Both \emph{feature selection} and \emph{feature extraction} approaches can improve performance, especially in fields like disease diagnosis.
+    \end{itemize}
+    \item \textbf{Final Thought}
+    \begin{itemize}
+        \item Choosing the right technique (PCA, LDA, t-SNE, autoencoders, etc.) depends on data characteristics and the problem's goals.
+        \item Always weigh the trade-off between reducing dimensions and retaining critical information.
+        \item Often, testing multiple methods is often necessary to find the best result.
+    \end{itemize}
+\end{itemize}
+
+\section{Clarification on \( S_i \) Calculation}
+
+The matrix \( S_i \) is the \textbf{scatter matrix for the \(i\)-th class}, measuring how the data points within class \(i\) vary around their class mean. It is computed as:
+
+\[
+S_i = \sum_{\boldsymbol{x} \in \mathcal{C}_i} (\boldsymbol{x} - \boldsymbol{\mu}_i)(\boldsymbol{x} - \boldsymbol{\mu}_i)^T,
+\]
+
+where:
+\begin{itemize}
+    \item \( \mathcal{C}_i \): The set of all data points belonging to the \(i\)-th class.
+    \item \( \boldsymbol{x} \): A single data point (a \(p \times 1\) vector, where \(p\) is the number of features).
+    \item \( \boldsymbol{\mu}_i \): The mean vector of the \(i\)-th class, given by:
+    \[
+    \boldsymbol{\mu}_i = \frac{1}{N_i} \sum_{\boldsymbol{x} \in \mathcal{C}_i} \boldsymbol{x},
+    \]
+    where \( N_i \) is the number of data points in class \(i\).
+    \item \( (\boldsymbol{x} - \boldsymbol{\mu}_i)(\boldsymbol{x} - \boldsymbol{\mu}_i)^T \): The outer product of the difference between a data point and the class mean, resulting in a \(p \times p\) matrix.
+\end{itemize}
+
+\noindent Alternatively, if the data points for class \(i\) are organized in a matrix \( X_i \) (\(N_i \times p\), where each row is a data point), \( S_i \) can be computed in matrix form as:
+\[
+S_i = (X_i - \boldsymbol{1}_{N_i} \boldsymbol{\mu}_i^T)^T (X_i - \boldsymbol{1}_{N_i} \boldsymbol{\mu}_i^T),
+\]
+where:
+\begin{itemize}
+    \item \( \boldsymbol{1}_{N_i} \): A column vector of ones of size \( N_i \).
+    \item \( \boldsymbol{\mu}_i^T \): A row vector of the class mean (replicated \( N_i \) times to align with \( X_i \)).
+\end{itemize}
+
+\noindent Once \( S_i \) is computed for all classes, the \textbf{within-class scatter matrix} \( S_W \) is obtained by summing the scatter matrices of all classes:
+\[
+S_W = \sum_{i=1}^c S_i,
+\]
+where \( c \) is the number of classes.
+
+\noindent Intuitively, \( S_i \) captures how spread out the data is within class \(i\), and \( S_W \) aggregates this information across all classes.
+
+
+\end{document}

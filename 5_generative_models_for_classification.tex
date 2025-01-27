@@ -1,0 +1,344 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Generative Models for Classification}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction and Motivating Example}
+
+\begin{itemize}
+    \item Throughout this text, we will consider a simple yet illustrative example: \textit{classifying emails as spam or not spam}.
+    \item In this example, we need a method to decide, based on features extracted from an email, whether it should be flagged as spam.
+    \item There are two broad approaches to tackling this problem, distinguished by the type of probabilistic model used.
+\end{itemize}
+
+\subsection{Generative Models}
+\begin{itemize}
+    \item Generative models learn the joint probability distribution \(P(X,y)\) over the input features \(X\) and the labels \(y\).
+    \item This allows generative models to not only classify emails using Bayes’ Theorem but also generate new emails that resemble the original data.
+    \item Examples of generative models include the Bayes classifier, Linear Discriminant Analysis (LDA), Quadratic Discriminant Analysis (QDA), Variational Autoencoders (VAEs), and Generative Adversarial Networks (GANs).
+\end{itemize}
+
+\subsection{Discriminative Models}
+\begin{itemize}
+    \item Discriminative models directly model the conditional probability \(P(y \mid X)\), focusing solely on predicting the label from given features.
+    \item These models often achieve high classification accuracy when ample data is available but do not attempt to model how the data is generated.
+    \item Examples of discriminative models include K-Nearest Neighbors (KNN) and Logistic Regression.
+\end{itemize}
+
+\subsection{Spam Detection Example}
+\begin{itemize}
+    \item A generative model might learn how the words, sender information, or other features are jointly distributed in spam versus non-spam emails and then use Bayes' Theorem to classify.
+    \item A discriminative model would learn a direct mapping from email features to the corresponding label, skipping the explicit modeling of how the email data is generated.
+\end{itemize}
+
+\section{Bayes Classifier}
+
+The \textbf{Bayes classifier} provides the theoretical optimum under 0-1 loss by choosing the class that maximizes the posterior probability \(P(y \mid X)\). Specifically:
+\[
+p(y=k \mid X) \;=\; \frac{p(X \mid y=k)\,p(y=k)}{p(X)}.
+\]
+\begin{itemize}
+  \item \(p(y = k \mid X)\) is the posterior probability: the probability of class \(k\) given features \(X\).
+  \item \(p(X \mid y = k)\) is the class conditional distribution.
+  \item \(p(y = k)\) is the prior probability of class \(k\).
+  \item \(p(X)\) is the same for every class, so it is often ignored when comparing classes.
+\end{itemize}
+
+\noindent
+\textbf{Practical Implementation:}
+\begin{itemize}
+  \item \textbf{In our spam example}, the prior \(p(\text{spam})\) might be estimated by the proportion of spam emails in your dataset, and \(p(X \mid \text{spam})\) might capture how likely it is to see particular words, senders, or other features in a spam email.
+  \item The predicted class is the one with the highest posterior probability:
+  \[
+  \hat{y} = \arg\max_{k} \; p(y = k \mid X).
+  \]
+  \item Under 0-1 loss, this is the \emph{Bayes decision rule}. It yields the lowest achievable classification error if the true distributions are known.
+\end{itemize}
+
+\section{Why Not Always Use the Bayes Classifier?}
+
+Although the Bayes classifier is theoretically optimal under 0-1 loss, we typically do not know the true class conditional probabilities \(p(X \mid y=k)\) or the priors \(p(y=k)\). We must \emph{estimate} them from the data, which can be challenging:
+\begin{itemize}
+  \item If we make wrong assumptions (e.g., assuming a distribution is normal when it is not), the classifier might perform poorly.
+  \item If we have limited data, accurately estimating high-dimensional joint distributions can be difficult.
+  \item Discriminative approaches often yield better performance in many practical scenarios because they bypass modeling the full joint distribution.
+\end{itemize}
+
+\section{Parameter Estimation: Priors and Conditionals}
+
+\subsection{Estimating Class Priors}
+
+A straightforward way to estimate the prior for each class (e.g., spam or not spam) is to count how many training samples belong to that class:
+\[
+\pi_k = \frac{n_k}{n},
+\]
+where \(n_k\) is the number of training samples of class \(k\) and \(n\) is the total number of training samples.
+
+\subsection{Estimating Class Conditionals}
+
+\paragraph{Histogram Approximation (Naive Bayes Example)} 
+Although less common in advanced exams, a simple way to estimate \(p(X \mid y = k)\) is to:
+\begin{itemize}
+  \item Split the data by class.
+  \item Form a histogram (or multiple histograms if \(X\) has many dimensions) to approximate the frequency distribution.
+  \item If we assume features are conditionally independent given the class, we multiply the estimated probabilities for each feature dimension to obtain \(p(X \mid y = k)\).
+\end{itemize}
+
+\noindent
+\textbf{Spam Example:} For each word (treated as a feature) within a spam email, we could estimate a histogram of word occurrences in spam emails vs. non-spam emails. Under a naive assumption of independence, we combine these estimates to compute the probability of seeing a particular combination of words in a spam email. Then we multiply by the prior \(p(\text{spam})\).
+
+\section{Linear and Quadratic Discriminant Analysis (LDA and QDA)}
+
+\begin{itemize}
+    \item \textbf{Context: Generative Models for Classification}
+    \begin{itemize}
+        \item Generative models model the joint distribution \(P(X,y)\) to both classify and generate data.
+        \item LDA and QDA are practical implementations based on Bayes classifiers that estimate posterior probabilities to minimize misclassification.
+    \end{itemize}
+    
+    \item \textbf{Connection to Bayes Classifier}
+    \begin{itemize}
+        \item Both LDA and QDA derive from Bayesian decision theory.
+        \item They estimate \(P(y \mid X)\) by modeling class-conditional densities and class priors.
+    \end{itemize}
+    
+    \item \textbf{Multivariate Gaussian Assumption}
+    \begin{itemize}
+        \item Features \(x \in \mathbb{R}^p\) are assumed to follow a multivariate normal distribution.
+        \item Density function:
+        \[
+        p(x; \mu, \Sigma) = \frac{1}{\underbrace{(2\pi)^{p/2}}_{\substack{\text{Normalization for} \\ \text{\(p\) dimensions}}} \underbrace{|\Sigma|^{1/2}}_{\substack{\text{Scaling by} \\ \text{covariance determinant}}}} \exp\!\Bigl(-\frac{1}{2}(x-\mu)^\top\Sigma^{-1}(x-\mu)\Bigr)
+        \]
+        \item \((x-\mu)^\top \Sigma^{-1}(x-\mu)\) represents the Mahalanobis distance between \(x\) and the mean \(\mu\).
+    \end{itemize}
+    
+    \item \textbf{Linear Discriminant Analysis (LDA)}
+    \begin{itemize}
+        \item \textbf{Assumptions:}
+        \begin{itemize}
+            \item All classes share a common covariance matrix \(\Sigma\).
+            \item Each class \(C_k\) has its own mean vector \(\mu_k\).
+        \end{itemize}
+        \item \textbf{Class-Conditional Density:} For a class \(C_k\),
+        \begin{itemize}
+            \item Formula:
+            \[
+            p(x \mid C_k) = \frac{1}{\underbrace{(2\pi)^{p/2}}_{\substack{\text{Normalization for} \\ \text{\(p\) dimensions}}} \underbrace{|\Sigma|^{1/2}}_{\substack{\text{Common scaling} \\ \text{across classes}}}} \exp\!\Bigl(-\frac{1}{2}(x-\mu_k)^\top\Sigma^{-1}(x-\mu_k)\Bigr)
+            \]
+            \item \(\mu_k\) is the mean of class \(C_k\) and \(\Sigma\) is shared across all classes.
+        \end{itemize}
+        \item \textbf{Discriminant Function:}
+        \begin{itemize}
+            \item Formula:
+            \[
+            \delta_k(x) = x^\top\Sigma^{-1}\mu_k - \frac{1}{2}\mu_k^\top\Sigma^{-1}\mu_k + \ln(\pi_k)
+            \]
+            \item Explanation:
+            \begin{itemize}
+                \item \(x^\top\Sigma^{-1}\mu_k\): weights the features \(x\) with the class mean \(\mu_k\) and covariance \(\Sigma\).
+                \item \(-\frac{1}{2}\mu_k^\top\Sigma^{-1}\mu_k\): adjusts for the class-specific constant.
+                \item \(\ln(\pi_k)\): incorporates the prior probability \(\pi_k\) of class \(C_k\).
+            \end{itemize}
+            \item \textbf{Decision Rule:} Assign \(x\) to the class with the highest \(\delta_k(x)\), producing linear decision boundaries.
+        \end{itemize}
+        \item \textbf{Example in Spam Detection:}
+        \begin{itemize}
+            \item Assume features such as total word count and number of suspicious keywords in an email follow a Gaussian distribution.
+            \item LDA estimates the shared covariance and class means to classify emails as spam or not spam.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Quadratic Discriminant Analysis (QDA)}
+    \begin{itemize}
+        \item \textbf{Assumptions:}
+        \begin{itemize}
+            \item Each class \(C_k\) has its own covariance matrix \(\Sigma_k\).
+            \item Each class \(C_k\) has its own mean vector \(\mu_k\).
+        \end{itemize}
+        \item \textbf{Class-Conditional Density:} For a class \(C_k\),
+        \begin{itemize}
+            \item Formula:
+            \[
+            p(x \mid C_k) = \frac{1}{\underbrace{(2\pi)^{p/2}}_{\substack{\text{Normalization for} \\ \text{\(p\) dimensions}}} \underbrace{|\Sigma_k|^{1/2}}_{\substack{\text{Scaling by class-} \\ \text{specific covariance}}}} \exp\!\Bigl(-\frac{1}{2}(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k)\Bigr)
+            \]
+            \item \(\Sigma_k\) is specific to class \(C_k\) and allows for different covariance structures.
+        \end{itemize}
+        \item \textbf{Discriminant Function:}
+        \begin{itemize}
+            \item Formula:
+            \[
+            \delta_k(x) = -\frac{1}{2}\ln|\Sigma_k| - \frac{1}{2}(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k) + \ln(\pi_k)
+            \]
+            \item Explanation:
+            \begin{itemize}
+                \item \(-\frac{1}{2}\ln|\Sigma_k|\): corrects for the class-specific scaling of the density.
+                \item \(-\frac{1}{2}(x-\mu_k)^\top\Sigma_k^{-1}(x-\mu_k)\): measures the Mahalanobis distance in the context of \(\Sigma_k\).
+                \item \(\ln(\pi_k)\): includes the prior probability for class \(C_k\).
+            \end{itemize}
+            \item \textbf{Decision Rule:} Assign \(x\) to the class with the highest \(\delta_k(x)\), leading to quadratic decision boundaries.
+        \end{itemize}
+        \item \textbf{Example in Spam Detection:}
+        \begin{itemize}
+            \item In cases where variability among features differs between spam and non-spam emails, QDA allows different covariance matrices for each class.
+            \item This flexibility can improve classification when the Gaussian assumption holds differently in each class.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Comparison of LDA vs QDA}
+    \begin{itemize}
+        \item \textbf{Covariance Structure:}
+        \begin{itemize}
+            \item LDA: Uses a common covariance matrix \(\Sigma\) for all classes.
+            \item QDA: Uses class-specific covariance matrices \(\Sigma_k\).
+        \end{itemize}
+        \item \textbf{Decision Boundaries:}
+        \begin{itemize}
+            \item LDA: Results in linear boundaries.
+            \item QDA: Results in quadratic boundaries.
+        \end{itemize}
+        \item \textbf{Parameter Estimation:}
+        \begin{itemize}
+            \item LDA: Fewer parameters to estimate, leading to lower variance.
+            \item QDA: More parameters, offering flexibility at the risk of higher variance.
+        \end{itemize}
+        \item \textbf{Data Requirements:}
+        \begin{itemize}
+            \item LDA: Often preferred when data is limited.
+            \item QDA: Requires larger datasets for reliable estimation of class-specific covariances.
+        \end{itemize}
+        \item \textbf{Bias-Variance Tradeoff:}
+        \begin{itemize}
+            \item LDA: Typically higher bias but lower variance.
+            \item QDA: Typically lower bias but higher variance.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Parameter Estimation for LDA and QDA (Generative Framework)}
+    \begin{itemize}
+        \item \textbf{Class Priors:}
+        \begin{itemize}
+            \item Estimated as:
+            \[
+            \pi_k = \frac{n_k}{n}
+            \]
+            \item \(n_k\): Number of samples in class \(C_k\); \(n\): Total number of samples.
+        \end{itemize}
+        \item \textbf{Class Means:}
+        \begin{itemize}
+            \item Estimated as:
+            \[
+            \hat{\mu}_k = \frac{1}{n_k}\sum_{i:\,y_i=k}\boldsymbol{x}_i
+            \]
+            \item \(\hat{\mu}_k\): Sample mean vector for class \(C_k\).
+        \end{itemize}
+        \item \textbf{Covariance Estimation for LDA:}
+        \begin{itemize}
+            \item \textbf{Single Feature:}
+            \begin{itemize}
+                \item Estimated variance:
+                \[
+                \hat{\sigma}^2 = \frac{1}{n-K}\sum_{k=1}^K\sum_{i:\,y_i=k}\underbrace{(x_i-\hat{\mu}_k)^2}_{\substack{\text{Squared deviation} \\ \text{from mean}}}
+                \]
+            \end{itemize}
+            \item \textbf{Multiple Features:}
+            \begin{itemize}
+                \item Estimated covariance matrix:
+                \[
+                \hat{\Sigma} = \frac{1}{n-K}\sum_{k=1}^K\sum_{i:\,y_i=k}\underbrace{(\boldsymbol{x}_i-\hat{\mu}_k)(\boldsymbol{x}_i-\hat{\mu}_k)^\top}_{\substack{\text{Outer product of} \\ \text{deviations from mean}}}
+                \]
+            \end{itemize}
+        \end{itemize}
+        \item \textbf{Covariance Estimation for QDA:}
+        \begin{itemize}
+            \item \textbf{Single Feature:}
+            \begin{itemize}
+                \item Estimated class-specific variance:
+                \[
+                \hat{\sigma}_k^2 = \frac{1}{n_k-1}\sum_{i:\,y_i=k}\underbrace{(x_i-\hat{\mu}_k)^2}_{\substack{\text{Squared deviation} \\ \text{from mean}}}
+                \]
+            \end{itemize}
+            \item \textbf{Multiple Features:}
+            \begin{itemize}
+                \item Estimated class-specific covariance matrix:
+                \[
+                \hat{\Sigma}_k = \frac{1}{n_k-1}\sum_{i:\,y_i=k}\underbrace{(\boldsymbol{x}_i-\hat{\mu}_k)(\boldsymbol{x}_i-\hat{\mu}_k)^\top}_{\substack{\text{Outer product of} \\ \text{deviations from mean}}}
+                \]
+            \end{itemize}
+        \end{itemize}
+        \item \textbf{Spam Detection Context:}
+        \begin{itemize}
+            \item LDA assumes a single covariance \(\Sigma\) for both spam and non-spam emails.
+            \item QDA allows different covariance estimates (\(\Sigma_{\text{spam}}\) and \(\Sigma_{\text{non-spam}}\)) to capture varying feature variability.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Summary of LDA and QDA in a Generative Framework}
+    \begin{itemize}
+        \item They implement the Bayes classifier by modeling Gaussian class-conditional densities.
+        \item LDA offers simplicity with linear decision boundaries and fewer parameters.
+        \item QDA provides greater flexibility with quadratic boundaries by estimating class-specific covariances.
+        \item Both methods enable classification by explicitly modeling how data is generated, which is valuable in applications such as spam detection.
+    \end{itemize}
+\end{itemize}
+
+\pagebreak
+\section{Advanced Generative Models}
+
+\begin{itemize}
+    \item \textbf{Variational Autoencoders (VAEs)}
+    \begin{itemize}
+        \item \textbf{Latent Variable Model:} VAEs introduce a latent variable \(z\) and learn both an encoder and a decoder.
+        \begin{itemize}
+            \item Encoder: \(q_\phi(z \mid x)\) \quad \(\underbrace{\text{Approximates the true posterior of } z}_{\text{latent representation estimation}}\)
+            \item Decoder: \(p_\theta(x \mid z)\) \quad \(\underbrace{\text{Generates data from } z}_{\text{reconstruction of } x}\)
+        \end{itemize}
+        \item \textbf{Training Objective (ELBO):}
+        \begin{itemize}
+            \item \[
+              \mathcal{L} = \mathbb{E}_{q_{\phi}(z \mid x)}\Bigl[\ln p_{\theta}(x \mid z)\Bigr] - D_{\text{KL}}\Bigl(q_{\phi}(z \mid x) \,\|\, p(z)\Bigr)
+              \]
+            \item \(\underbrace{\mathbb{E}_{q_{\phi}(z \mid x)}\big[\ln p_{\theta}(x \mid z)\big]}_{\substack{\text{Reconstruction term:}\\\text{accuracy of } x \text{ recovery}}}\)
+            \item \(\underbrace{D_{\text{KL}}\bigl(q_{\phi}(z \mid x)\,\|\,p(z)\bigr)}_{\substack{\text{Regularization:}\\\text{closeness to prior } p(z)}}\)
+        \end{itemize}
+        \item \textbf{Data Generation:} VAEs generate new samples by drawing \(z\) from the prior \(p(z)\) and computing \( \hat{x} \sim p_\theta(x \mid z)\).
+        \item \textbf{Classification Adaptation:} VAEs can be extended to learn class-dependent latent spaces for classification tasks.
+        \item \textbf{Spam Example:} A VAE trained on emails learns a latent space where differences between spam and non-spam emails can be observed; this latent representation can be used for data augmentation or anomaly detection.
+    \end{itemize}
+    
+    \item \textbf{Generative Adversarial Networks (GANs)}
+    \begin{itemize}
+        \item \textbf{Adversarial Framework:} GANs consist of two competing networks: a generator and a discriminator.
+        \begin{itemize}
+            \item Generator \(G\): Produces synthetic samples, \(x_{\text{fake}} = G(z)\), by mapping noise \(z\) (drawn from a simple prior, e.g., \(p(z)\)) to data space.
+            \item Discriminator \(D\): Evaluates samples and distinguishes between real data \(x\) and generated data \(x_{\text{fake}}\); outputs a probability.
+        \end{itemize}
+        \item \textbf{Training Objective:}
+        \begin{itemize}
+            \item Generator Objective:
+            \[
+            \min_G \; \underbrace{\mathbb{E}_{z\sim p(z)}\Bigl[\ln\bigl(1-D(G(z))\bigr)\Bigr]}_{\substack{\text{Fool the discriminator}}}
+            \]
+            \item Discriminator Objective:
+            \[
+            \max_D \; \underbrace{\mathbb{E}_{x\sim p_{\text{data}}(x)}\Bigl[\ln D(x)\Bigr]}_{\substack{\text{Recognize real data}}} + \underbrace{\mathbb{E}_{z\sim p(z)}\Bigl[\ln\bigl(1-D(G(z))\bigr)\Bigr]}_{\substack{\text{Reject fake data}}}
+            \]
+        \end{itemize}
+        \item \textbf{Data Augmentation for Classification:} Although GANs are not primarily designed for classification, they can augment datasets by generating additional samples (e.g., extra spam emails if they are underrepresented).
+        \item \textbf{Semi-Supervised Learning:} The discriminator in GANs can be adapted to also classify data when only limited labeled examples are available.
+        \item \textbf{Spam Example:} In a scenario with few spam emails, a GAN can generate realistic synthetic spam samples to enlarge the training set for a spam classifier.
+    \end{itemize}
+\end{itemize}
+
+\end{document}

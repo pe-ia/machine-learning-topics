@@ -1,0 +1,328 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{The Bayes Classifier, Loss Functions, and Their Applications}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Classification Problem}
+
+Imagine a classification problem where we predict one of $K$ classes from features $X$. For example:
+
+\begin{itemize}
+    \item \textbf{Medical Diagnosis in ER:} A person with a certain set of symptoms could have one of three medical conditions: Stroke, drug overdose, or epileptic seizure. Which condition does the individual have?
+\end{itemize}
+
+\textbf{Classes:} The possible outcomes (e.g., stroke, drug overdose, seizure) are represented as $C_1$, $C_2$, $C_3$.
+
+\subsection{Building a Classifier}
+
+If we know $p(X, C_k) =  p(C_k) \cdot p(X | C_k)$ - the joint probability distribution of the features $X$ and the class $C_k$, we can build a classifier using Bayes' Theorem to find the most probable class for given features.
+
+\section{What is the Bayes Classifier?}
+
+\begin{itemize}
+    \item \textbf{Definition:} The Bayes classifier assigns an input $x$ to the class $y$ that maximizes the posterior probability $P(y \mid x)$.
+    \item \textbf{Bayes Rule:}
+    \[
+    P(y \mid x) = \frac{P(x \mid y)P(y)}{P(x)}
+    \]
+    Since $P(x)$ is the same for all classes, we maximize $P(x \mid y)P(y)$.
+    \item \textbf{Optimality:} A bayes classifier is optimal because it minimizes the probability of misclassification, achieving the lowest theoretical error rate (Bayes error rate).
+\end{itemize}
+
+\subsection{Decision Rule}
+
+\begin{itemize}
+    \item Define \textbf{decision regions} $R_k$ for each class $C_k$, where all points $X \in R_k$ are classified as class $C_k$.
+    \item Misclassification happens when a point $X$ is assigned to the region of a class other than its true class.
+    \item To minimize misclassification, assign $X$ to the class $C_k$ that maximizes the posterior probability $P(C_k \mid X)$.
+    \item For multiple classes, the misclassification probability is computed as:
+    \[
+    p(\text{mistake}) = \sum_{j \neq k} \int_{R_k} p(X, C_j)\, dX
+    \]
+    \begin{itemize}
+        \item This formula sums the probability of points from all other classes $C_j$ (\(j \neq k\)) being incorrectly assigned to region $R_k$.
+        \item Each term in the sum represents the misclassification contribution from a specific class $C_j$ into region $R_k$.
+    \end{itemize}
+    \item The \textbf{decision rule}: Assign $X$ to the class $C_k$ that has the highest posterior probability $P(C_k \mid X)$ at $X$.
+    \item \textbf{Example Reference:} In our medical diagnosis example, the goal is to have the decision rule assign a patient to the most likely condition (e.g., stroke, drug overdose, or seizure) based on their symptoms with the lowest misclassification probability.
+
+\end{itemize}
+
+\section{Loss Functions and Their Role}
+
+\begin{itemize}
+    \item \textbf{Connecting to the Decision Rule:} The decision rule minimizes misclassification, and loss functions generalize this by quantifying prediction error for a single training example.
+    \item \textbf{Common Loss Functions:}
+    \item \textbf{0-1 Loss:} $L(y, \hat{y}) = 1$ if $y \neq \hat{y}$, otherwise $L(y, \hat{y}) = 0$. Computationally infeasible to minimize directly.
+    \begin{itemize}
+        \item This is the loss function used in the Bayes classifier
+        \item It aligns with the medical diagnosis example
+    \end{itemize}
+    \item \textbf{Log-Loss:} For probabilistic models, penalizes wrong predictions more as confidence increases. Formula:
+    \[
+    L(y, \hat{p}) = -\log(\hat{p}_y)
+    \]
+    \begin{itemize}
+        \item \( y \): The true class label for the training example.
+        \item \( \hat{p}_y \): The predicted probability assigned to the true class \( y \) by the model.
+        \item \textbf{Explanation:}
+        \begin{itemize}
+            \item If \( \hat{p}_y \) (confidence in the correct class) is close to 1, the loss is small (good prediction).
+            \item If \( \hat{p}_y \) is close to 0, the loss becomes large (bad prediction).
+            \item Log-Loss heavily penalizes incorrect predictions made with high confidence, encouraging the model to provide well-calibrated probabilities.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Squared Error Loss:} Commonly used for regression problems, it measures the squared difference between the predicted and true values:
+    \[
+    L(y, \hat{y}) = (y - \hat{y})^2
+    \]
+
+    \item \textbf{Absolute Error Loss:} Also used in regression, it measures the absolute difference between the predicted and true values:
+    \[
+    L(y, \hat{y}) = |y - \hat{y}|
+    \]
+\end{itemize}
+
+\section{Goal in Terms of Loss}
+
+\begin{itemize}
+    \item The goal of a classification algorithm is to minimize the \textbf{expected loss}, which measures the average prediction error across all possible inputs.
+    \item Expected loss combines the probabilities of inputs and outcomes with a \textbf{loss matrix} that assigns a cost to each type of misclassification.
+    \item To minimize the expected loss, we assign a new input \( X \) to the class \( j \) that minimizes the total cost based on the posterior probabilities \( p(C_k \mid X) \).
+    \item This framework ensures optimal classification performance when the posterior probabilities are known.
+\end{itemize}
+
+\textbf{Formulas:}
+\begin{itemize}
+    \item General expected loss:
+    \[
+    E[L] = \sum_k \sum_j \int_{R_j} L_{kj} \, p(X, C_k)\, dX
+    \]
+    \item Rewritten with posterior probabilities:
+    \[
+    E[L] = \sum_k \sum_j \int_{R_j} L_{kj} \, p(X) \, p(C_k \mid X)\, dX
+    \]
+    \item Decision rule to minimize loss:
+    \[
+    \text{Assign \( X \) to class \( j \) that minimizes: } \sum_k L_{kj} \, p(C_k \mid X)
+    \]
+\end{itemize}
+
+\textbf{Explanation of Terms:}
+\begin{itemize}
+    \item \( E[L] \): The expected loss, representing the average prediction error over all possible inputs.
+    \item \( R_j \): The decision region for class \( j \), where all inputs \( X \) in \( R_j \) are classified as class \( j \).
+    \item \( L_{kj} \): The loss incurred when the true class is \( C_k \), but the input is classified as \( C_j \).
+    \item \( p(X, C_k) \): The joint probability of observing features \( X \) and the true class \( C_k \).
+    \item \( p(X) \): The probability distribution of the input features.
+    \item \( p(C_k \mid X) \): The posterior probability of class \( C_k \) given the input \( X \), derived using Bayes' theorem.
+\end{itemize}
+
+\section{K-Nearest Neighbors (KNN): A Simple Approximation to the Bayes Classifier}
+
+\subsection{KNN Classification of a Point $X_0$}
+
+\begin{enumerate}
+    \item Find the $K$ points in the training data that are closest to $X_0$ (this set is denoted as $N_0$).
+    \item Estimate the posterior probability for class $j$ as the fraction of points in $N_0$ belonging to class $j$:
+    \[
+    P(Y = j \mid X = X_0) = \frac{1}{K} \sum_{i \in N_0} I(Y_i = j)
+    \]
+    where $I$ is an indicator function that equals 1 if $Y_i = j$, and 0 otherwise.
+    \item Assign the class with the highest posterior probability.
+\end{enumerate}
+
+\subsection{KNN Decision Boundaries}
+
+\begin{itemize}
+    \item \textbf{Flexibility:} KNN with $K=1$ produces highly flexible boundaries, while larger values of $K$ result in smoother, less flexible boundaries.
+    \item \textbf{Comparison:}
+    \begin{itemize}
+        \item For $K=1$, the decision boundary may overfit the data.
+        \item For $K=100$, the boundary becomes less flexible, potentially underfitting the data.
+    \end{itemize}
+\end{itemize}
+
+\subsection{KNN Training and Test Errors}
+
+\begin{itemize}
+    \item As $K$ decreases (increased flexibility), training error decreases but test error may increase due to overfitting.
+    \item Conversely, larger $K$ smooths the model, reducing variance but increasing bias.
+    \item The Bayes error rate serves as the theoretical lower bound for the error.
+\end{itemize}
+
+\subsection{Summary of KNN}
+
+\begin{itemize}
+    \item \textbf{Decision Rule:} Assign a class based on majority vote among $K$ nearest neighbors.
+    \item \textbf{Advantages:} Provides highly flexible boundaries and serves as a good baseline classifier, often achieving error rates close to the Bayes error rate.
+    \item \textbf{Limitations:} Struggles in high-dimensional spaces and can be computationally expensive.
+    \item \textbf{Parameter Selection:} The value of $K$ is typically chosen via cross-validation to balance bias and variance.
+\end{itemize}
+
+\section{Linear and Quadratic Discriminant Analysis (LDA and QDA)}
+
+Building on the Bayes classifier and loss minimization, LDA and QDA offer practical methods for classification by modeling class-conditional distributions.
+
+\begin{itemize}
+    \item \textbf{Connection to Bayes Classifier}
+    \begin{itemize}
+        \item Both LDA and QDA derive from Bayesian decision theory.
+        \item They estimate posterior probabilities to minimize misclassification.
+    \end{itemize}
+    
+    \item \textbf{Multivariate Gaussian Assumption}
+    \begin{itemize}
+        \item Features are modeled using a $p$-dimensional multivariate normal distribution.
+        \item Density function:
+        \[
+        p(x; \mu, \Sigma) = \frac{1}{(2\pi)^{p/2} |\Sigma|^{1/2}} \exp\left(-\frac{1}{2}(x-\mu)^\top \Sigma^{-1}(x-\mu)\right)
+        \]
+        \item Mahalanobis distance measures the distance between $x$ and the class mean $\mu$.
+    \end{itemize}
+    
+    \item \textbf{Linear Discriminant Analysis (LDA)}
+    \begin{itemize}
+        \item \textbf{Assumptions}
+        \begin{itemize}
+            \item All classes share the same covariance matrix $\Sigma$.
+            \item Each class $C_k$ has its own mean vector $\mu_k$.
+        \end{itemize}
+        \item \textbf{Class-Conditional Density}
+        \begin{itemize}
+            \item Likelihood of $x$ given class $C_k$ - Defines the probability of observing $x$ given it belongs to class $C_k$.
+            \item Formula: 
+            \[
+            p(x \mid C_k) = \frac{1}{(2\pi)^{p/2} |\Sigma|^{1/2}} \exp\left(-\frac{1}{2}(x-\mu_k)^\top \Sigma^{-1}(x-\mu_k)\right)
+            \]
+            \item $(2\pi)^{p/2}$ normalizes based on feature dimensionality $p$.
+            \item $|\Sigma|^{1/2}$ scales the density by the covariance matrix determinant.
+            \item $(x-\mu_k)^\top \Sigma^{-1}(x-\mu_k)$ is the Mahalanobis distance.
+        \end{itemize}
+        \item \textbf{Discriminant Function}
+        \begin{itemize}
+            \item Log-posterior probability of $x$ belonging to $C_k$
+            \item Quantifies how likely $x$ belongs to class $C_k$.
+            \item Formula: 
+            \[
+            \delta_k(x) = x^\top \Sigma^{-1} \mu_k - \frac{1}{2}\mu_k^\top \Sigma^{-1}\mu_k + \ln(\pi_k)
+            \]
+            \item $x^\top \Sigma^{-1} \mu_k$ weights $x$ by the class mean and covariance.
+            \item $-\frac{1}{2}\mu_k^\top \Sigma^{-1}\mu_k$ adjusts for class-specific constants.
+            \item $\ln(\pi_k)$ incorporates the prior probability of class $C_k$ - $\pi$ means prior.
+            \item By summing the log-likelihood term ($x^\top \Sigma^{-1} \mu_k - \frac{1}{2}\mu_k^\top \Sigma^{-1}\mu_k$) and the log-prior ($\ln(\pi_k)$), $\delta_k(x)$ reflects both how well $x$ matches $C_k$ and how common $C_k$ is.
+        \end{itemize}
+        \item \textbf{Decision Rule}
+        \begin{itemize}
+            \item Assign $x$ to the class with the highest $\delta_k(x)$.
+            \item Produces linear decision boundaries due to $\delta_k(x)$'s linearity in $x$.
+        \end{itemize}
+    \end{itemize}
+
+\item \textbf{Quadratic Discriminant Analysis (QDA)}
+    \begin{itemize}
+        \item \textbf{Assumptions}
+        \begin{itemize}
+            \item Each class $C_k$ has its own covariance matrix $\Sigma_k$.
+            \item Each class $C_k$ has its own mean vector $\mu_k$.
+        \end{itemize}
+    \item \textbf{Class-Conditional Density}
+    \begin{itemize}
+        \item Likelihood of $x$ given class $C_k$ - Defines the probability of observing $x$ given it belongs to class $C_k$.
+        \item Formula: 
+        \[
+        p(x \mid C_k) = \frac{1}{(2\pi)^{p/2} |\Sigma_k|^{1/2}} 
+        \exp\left(-\frac{1}{2}\underbrace{(x-\mu_k)^\top \Sigma_k^{-1}(x-\mu_k)}_{\text{Mahalanobis distance}}\right)
+        \]
+        \item $|\Sigma_k|^{1/2}$ scales by the determinant of the class-specific covariance matrix, which adjusts for the shape and orientation of the data distribution in \(C_k\).
+        \item $(x-\mu_k)^\top \Sigma_k^{-1}(x-\mu_k)$ is the Mahalanobis distance, quantifying the distance between $x$ and the class mean \(\mu_k\) while accounting for correlations in the features.
+        \item The class-conditional density represents the likelihood of observing \(x\) under a Gaussian distribution for class \(C_k\), and it's scaled by both the covariance matrix \(\Sigma_k\) and the relative distance of \(x\) from the mean \(\mu_k\).
+    \end{itemize}
+    
+    \item \textbf{Discriminant Function}
+    \begin{itemize}
+        \item Log-posterior probability of $x$ belonging to $C_k$
+        \item Quantifies how likely $x$ belongs to class $C_k$.
+        \item Formula:
+        \[
+        \delta_k(x) = -\frac{1}{2}\underbrace{\ln|\Sigma_k|}_{\text{Adjusts for covariance scale}} 
+        - \frac{1}{2}\underbrace{(x-\mu_k)^\top \Sigma_k^{-1}(x-\mu_k)}_{\text{Mahalanobis distance for $C_k$}} 
+        + \underbrace{\ln(\pi_k)}_{\text{Log-prior probability of $C_k$}}
+        \]
+        \item $-\frac{1}{2}\ln|\Sigma_k|$ adjusts for the determinant of the class covariance matrix, ensuring that data spread is normalized correctly for each class.
+        \item $-\frac{1}{2}(x-\mu_k)^\top \Sigma_k^{-1}(x-\mu_k)$ measures how far \(x\) is from the mean of class \(C_k\), weighted by the covariance matrix.
+        \item $\ln(\pi_k)$ incorporates the prior probability of class \(C_k\), favoring classes that are more prevalent in the data.
+        \item The discriminant function combines the effect of covariance scaling (\(|\Sigma_k|\)), distance from the class mean (\((x-\mu_k)\)), and prior likelihood (\(\pi_k\)) to evaluate the likelihood of \(x\) belonging to class \(C_k\).
+    \end{itemize}
+        \item \textbf{Decision Rule}
+        \begin{itemize}
+            \item Assign $x$ to the class with the highest $\delta_k(x)$.
+            \item Produces quadratic decision boundaries due to $\delta_k(x)$'s quadratic terms in $x$.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Comparison: LDA vs QDA}
+    \begin{itemize}
+        \item \textbf{Covariance Matrices}
+        \begin{itemize}
+            \item LDA uses a shared $\Sigma$ across classes.
+            \item QDA allows each class to have its own $\Sigma_k$.
+        \end{itemize}
+        \item \textbf{Decision Boundaries}
+        \begin{itemize}
+            \item LDA produces linear boundaries.
+            \item QDA produces quadratic boundaries.
+        \end{itemize}
+        \item \textbf{Model Complexity}
+        \begin{itemize}
+            \item LDA estimates fewer parameters, leading to lower variance.
+            \item QDA estimates more parameters, offering greater flexibility but higher variance.
+        \end{itemize}
+        \item \textbf{Data Requirements}
+        \begin{itemize}
+            \item LDA is suitable for smaller datasets.
+            \item QDA requires larger datasets to reliably estimate class-specific covariance matrices.
+        \end{itemize}
+        \item \textbf{Bias-Variance Tradeoff}
+        \begin{itemize}
+            \item LDA has higher bias (oversimplification) but lower variance (overfitting).
+            \item QDA has lower bias but higher variance.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Practical Considerations}
+    \begin{itemize}
+        \item \textbf{Regularization}
+        \begin{itemize}
+            \item Enhances covariance estimates, especially for QDA with limited data.
+        \end{itemize}
+        \item \textbf{Computational Efficiency}
+        \begin{itemize}
+            \item LDA is computationally less intensive than QDA.
+        \end{itemize}
+        \item \textbf{Assumption Checking}
+        \begin{itemize}
+            \item Verify normality and covariance assumptions before applying LDA or QDA.
+        \end{itemize}
+    \end{itemize}
+    
+    \item \textbf{Summary}
+    \begin{itemize}
+        \item LDA and QDA implement the Bayes classifier by modeling class-conditional Gaussian distributions.
+        \item LDA offers simplicity with linear boundaries, suitable for smaller datasets.
+        \item QDA provides flexibility with quadratic boundaries, ideal for larger datasets.
+        \item Both aim to minimize expected loss by estimating posterior probabilities under Gaussian assumptions.
+    \end{itemize}
+\end{itemize}
+
+\end{document}

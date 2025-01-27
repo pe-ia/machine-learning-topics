@@ -1,0 +1,277 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Clustering Methods}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\begin{itemize}
+    \item \textbf{Definition of Clustering}
+    \begin{itemize}
+        \item Clustering is an unsupervised learning technique that groups data points into clusters based on similarity.
+        \item It does not rely on labeled examples; instead, it tries to automatically find underlying structure in the data.
+    \end{itemize}
+    \item \textbf{Motivation}
+    \begin{itemize}
+        \item Useful for discovering hidden patterns in large datasets.
+        \item Widely applied in customer segmentation, image processing, anomaly detection, topic modeling, and other areas.
+    \end{itemize}
+    \item \textbf{Example Scenario (Referenced Throughout)}
+    \begin{itemize}
+        \item Consider an e-commerce platform with many customers.
+        \item We want to group customers (clusters) based on purchasing behavior (e.g., frequency of purchase, total spend, product categories).
+        \item Different clustering methods can provide different insights into how customers naturally group together.
+    \end{itemize}
+\end{itemize}
+
+\section{Clustering Methods}
+\begin{itemize}
+    \item \textbf{Overview}
+    \begin{itemize}
+        \item Clustering algorithms vary in how they define and discover clusters.
+        \item Key families: Partition-based, Hierarchical, Density-based, Model-based.
+        \item Choice depends on the shape of clusters, data scale, noise, and computational requirements.
+    \end{itemize}
+    \item \textbf{Partition-Based Clustering (e.g., K-means)}
+    \begin{itemize}
+        \item \textbf{Concept}
+        \begin{itemize}
+            \item Divides data into $k$ clusters.
+            \item Assigns each data point to exactly one cluster.
+            \item Common objective: minimize the sum of squared distances between points and their assigned cluster centroids.
+        \end{itemize}
+        \item \textbf{Mathematical Detail}
+        \begin{itemize}
+            \item Let the dataset be $\{x^{(1)}, x^{(2)}, \ldots, x^{(m)}\}$.
+            \item Partition into clusters $C_1, \ldots, C_K$ with centroids $\mu_1, \ldots, \mu_K$.
+            \item The cost (distortion) function often used is
+            \[
+            J\bigl(c^{(1)}, \ldots, c^{(m)}, \mu_{1}, \ldots, \mu_{K}\bigr)=\frac{1}{m} \sum_{i=1}^{m}\Bigl\|x^{(i)}-\mu_{c^{(i)}}\Bigr\|^{2}.
+            \]
+            \item In practice, we seek
+            \[
+            \min_{C_1, \ldots, C_K} \sum_{k=1}^{K} \sum_{x \in C_k} \| x - \mu_k \|^2.
+            \]
+        \end{itemize}
+        \item \textbf{Algorithm Steps (K-means)}
+        \begin{itemize}
+            \item Randomly initialize the $K$ cluster centroids (often by selecting $K$ training examples at random).
+            \item \textbf{Repeat until convergence or minimal improvement:}
+            \begin{itemize}
+                \item For each point $x^{(i)}$, assign $c^{(i)}$ to the index of the closest centroid:
+                \[
+                c^{(i)} = \arg \min_{k} \| x^{(i)} - \mu_k\|.
+                \]
+                \item Update each centroid to be the mean of the points assigned to it:
+                \[
+                \mu_k = \frac{1}{|C_k|} \sum_{x^{(i)} \in C_k} x^{(i)}.
+                \]
+                \item If a cluster ends up with no points, it is typically removed or reinitialized.
+            \end{itemize}
+        \end{itemize}
+        \item \textbf{Pseudocode Summary}
+        \begin{verbatim}
+K-means algorithm
+Randomly initialize K cluster centroids: mu_1, mu_2, ..., mu_K
+Repeat {
+    # Assign points to the closest cluster centroid
+    for i = 1 to m
+        c(i) := index (from 1 to K) of centroid closest to x^(i)
+
+    # Move cluster centroids
+    for k = 1 to K
+        mu_k := mean of points assigned to cluster k
+}
+        \end{verbatim}
+        \item \textbf{Random Initialization Details}
+        \begin{itemize}
+            \item Random selection of initial centroids can lead to local optima.
+            \item Common strategy: run the algorithm multiple times with different seeds and choose the result with the lowest cost.
+            \item K-means++ is a smarter initialization method that helps choose initial centroids in a more spread out manner.
+        \end{itemize}
+        \item \textbf{Revisiting the E-commerce Example}
+        \begin{itemize}
+            \item If $K=3$, we might discover “high-spending regulars,” “medium-spending occasional,” and “low-spending infrequent” clusters.
+            \item The cost function will decrease each iteration as centroids move to better represent each customer segment.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Hierarchical Clustering}
+    \begin{itemize}
+        \item \textbf{Definition}
+        \begin{itemize}
+            \item Builds a tree of clusters (dendrogram).
+            \item Can be \textbf{agglomerative} (bottom-up) or \textbf{divisive} (top-down).
+        \end{itemize}
+        \item \textbf{Agglomerative Methods}
+        \begin{itemize}
+            \item Start with each observation as its own cluster.
+            \item Repeatedly merge the two most similar clusters.
+            \item Similarity depends on linkage criteria.
+        \end{itemize}
+        \item \textbf{Divisive Methods}
+        \begin{itemize}
+            \item Start with all observations in one cluster.
+            \item Recursively split clusters until a stopping condition is reached.
+        \end{itemize}
+        \item \textbf{Linkage Criteria}
+        \begin{itemize}
+            \item \textbf{Single-Link}: $\displaystyle \min_{x \in A, \, y \in B} \| x - y \|$
+            \item \textbf{Complete-Link}: $\displaystyle \max_{x \in A, \, y \in B} \| x - y \|$
+            \item \textbf{Group-Average}: average distance between all pairs in clusters $A$ and $B$
+        \end{itemize}
+        \item \textbf{Dendrograms}
+        \begin{itemize}
+            \item A visual representation of nested clustering structure.
+            \item Cutting the dendrogram at a chosen level gives a specific number of clusters.
+        \end{itemize}
+        \item \textbf{E-commerce Example}
+        \begin{itemize}
+            \item Customers can be merged starting from individual profiles until a desired number of segments is formed.
+            \item A dendrogram might show at which point “high spenders” separate from “medium spenders.”
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Density-Based Clustering (e.g., DBSCAN)}
+    \begin{itemize}
+        \item \textbf{Definition}
+        \begin{itemize}
+            \item Identifies clusters as regions of high density separated by low-density regions.
+            \item Clusters can have arbitrary shapes and sizes.
+        \end{itemize}
+        \item \textbf{DBSCAN Mechanics}
+        \begin{itemize}
+            \item Two main parameters: $\epsilon$ (radius) and \text{MinPts} (minimum points).
+            \item A point is a \textbf{core point} if it has at least \text{MinPts} neighbors within distance $\epsilon$.
+            \item A \textbf{border point} is within $\epsilon$ of a core point but has fewer than \text{MinPts} neighbors.
+            \item A \textbf{noise point} does not belong to any cluster.
+        \end{itemize}
+        \item \textbf{Advantages and Disadvantages}
+        \begin{itemize}
+            \item Works well for discovering clusters of arbitrary shape.
+            \item Sensitive to parameter settings; requires domain knowledge to choose $\epsilon$ and \text{MinPts}.
+        \end{itemize}
+        \item \textbf{E-commerce Example}
+        \begin{itemize}
+            \item Might find a tight, high-density cluster of customers that buy very frequently (e.g., loyal customers).
+            \item Noise points might correspond to “one-time” buyers who do not fit neatly into main segments.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Model-Based Clustering (e.g., Gaussian Mixture Models)}
+    \begin{itemize}
+        \item \textbf{Definition}
+        \begin{itemize}
+            \item Assumes data is generated from a mixture of probability distributions (often Gaussians).
+            \item Each cluster corresponds to a distribution component with its own parameters.
+        \end{itemize}
+        \item \textbf{EM Algorithm}
+        \begin{itemize}
+            \item Uses \textbf{E-step} (Expectation) and \textbf{M-step} (Maximization) to estimate parameters iteratively.
+            \item Soft-clustering: each data point has a probability of belonging to each cluster.
+        \end{itemize}
+        \item \textbf{E-commerce Example}
+        \begin{itemize}
+            \item Could model “spending patterns” with multiple Gaussians, each representing different spending frequency and amounts.
+            \item Results in probabilities of cluster membership, which can guide personalized marketing.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section{Key Considerations and Challenges}
+\begin{itemize}
+    \item \textbf{Choosing the Right Method}
+    \begin{itemize}
+        \item Partition-based methods (K-means) are often efficient but assume roughly spherical clusters.
+        \item Hierarchical methods provide a global clustering structure but can be computationally intensive for large datasets.
+        \item Density-based methods (DBSCAN) excel at finding clusters of arbitrary shape but require careful parameter tuning.
+        \item Model-based methods (GMMs) handle soft assignments but assume a particular distributional form.
+        \item In the e-commerce example, if clusters are expected to be nonspherical, a density-based or hierarchical approach might be more suitable than standard K-means.
+    \end{itemize}
+    \item \textbf{Evaluating and Optimizing Clustering}
+    \begin{itemize}
+        \item \textbf{Silhouette Score}
+        \begin{itemize}
+            \item For a point $x_i$, let
+            \[
+            a(x_i) = \text{average distance to points in the same cluster},
+            \]
+            \[
+            b(x_i) = \text{lowest average distance to points in a different cluster}.
+            \]
+            \item The silhouette coefficient is
+            \[
+            s(x_i) = \frac{b(x_i) - a(x_i)}{\max(a(x_i), b(x_i))}.
+            \]
+            \item Ranges from -1 (poor clustering) to +1 (dense, well-separated clusters).
+        \end{itemize}
+        \item \textbf{Dunn Index}
+        \begin{itemize}
+            \item Ratio of the minimum inter-cluster distance to the maximum intra-cluster distance.
+            \item Larger Dunn index indicates better separation.
+        \end{itemize}
+        \item \textbf{K-means Cost Function Behavior}
+        \begin{itemize}
+            \item The sum of squared distances (distortion) decreases or remains constant every iteration.
+            \item Convergence is reached when the improvement becomes negligible.
+        \end{itemize}
+        \item \textbf{No Ground Truth in Unsupervised Learning}
+        \begin{itemize}
+            \item Evaluations can be subjective.
+            \item Domain knowledge is often needed to interpret results.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Practical Considerations}
+    \begin{itemize}
+        \item \textbf{Data Preprocessing}
+        \begin{itemize}
+            \item Scaling or standardizing features is crucial for distance-based methods (e.g., K-means).
+            \item Dimensionality reduction (PCA) can improve clustering performance and reduce noise in high-dimensional data.
+        \end{itemize}
+        \item \textbf{Outliers}
+        \begin{itemize}
+            \item Outliers can distort centroids and linkage measurements.
+            \item DBSCAN can treat extreme points as noise instead of forcing them into clusters.
+        \end{itemize}
+        \item \textbf{Initialization in K-means}
+        \begin{itemize}
+            \item Poor initialization can lead to suboptimal local minima.
+            \item Repeated runs or K-means++ mitigate this risk.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\section{Additional Insights}
+\begin{itemize}
+    \item \textbf{Soft vs. Hard Clustering}
+    \begin{itemize}
+        \item \textbf{Hard Clustering}
+        \begin{itemize}
+            \item Each point is assigned to exactly one cluster.
+            \item Examples: K-means, hierarchical clustering.
+        \end{itemize}
+        \item \textbf{Soft Clustering}
+        \begin{itemize}
+            \item Each point has a probability or degree of belonging to multiple clusters.
+            \item Example: GMMs, where posterior probabilities describe membership.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Clustering as a Data Reduction Technique}
+    \begin{itemize}
+        \item Reduces data complexity by representing large datasets with a smaller set of cluster centers.
+        \item In KNN classification, one can replace the training set with cluster centroids to reduce computation.
+        \item In the e-commerce example, using a few “representative” customer profiles from each cluster can speed up similarity-based analyses.
+    \end{itemize}
+\end{itemize}
+
+\end{document}

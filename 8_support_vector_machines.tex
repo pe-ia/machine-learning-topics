@@ -1,0 +1,271 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Support Vector Machines}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\begin{itemize}
+    \item \textbf{Definition:} Support Vector Machines (SVMs) are supervised learning models used for classification and regression tasks. They find a hyperplane (or line in 2D) that best separates data into classes.
+    \item \textbf{Key Idea:} Maximize the margin (or “street width”) between data points of different classes.
+    \item \textbf{Real-World Example:} Imagine dividing apples and oranges on a table using a straight stick (the hyperplane) to keep the fruits as separate as possible.
+    \item \textbf{Use Case:} SVMs are very effective in high-dimensional spaces but are not as useful for very large datasets.
+\end{itemize}
+
+\section{Core Concepts}
+
+\begin{itemize}
+    \item \textbf{Hinge Loss:} Typically used in SVMs,
+    \[
+    L(y, \hat{y}) = \max(0, 1 - y \cdot \hat{y})
+    \]
+    \begin{itemize}
+        \item \( y \): The true class label, typically encoded as \( +1 \) or \( -1 \) for binary classification.
+        \item \( \hat{y} \): The predicted score or margin from the model, which can be interpreted as the distance from the decision boundary.
+        \item \textbf{Explanation:}
+        \begin{itemize}
+            \item If \( y \cdot \hat{y} \geq 1 \), the prediction is correct and confidently on the correct side of the boundary, so the loss is \( 0 \).
+            \item If \( y \cdot \hat{y} < 1 \), the prediction is either incorrect or not confident enough, and the loss increases linearly as the margin decreases.
+            \item Hinge Loss encourages the model to not only classify correctly but to do so with a sufficient margin, ensuring better generalization.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Hyperplanes and Margins}
+\begin{itemize}
+    \item \textbf{Definition:} A hyperplane is a boundary that separates classes in feature space. The margin is the distance between the hyperplane and the nearest data points (support vectors). In the SVM context, this is sometimes described as finding the widest “street” between classes.
+    \item \textbf{Mathematical Detail:} For binary classification, the decision function is given by
+    \[
+    f(x) = w \cdot x + b = 0,
+    \]
+    where \(w\) is the weight vector, \(x\) is the input, and \(b\) is the bias term. Maximizing the margin is achieved by minimizing
+    \[
+    \frac{1}{2}\|w\|^2,
+    \]
+    subject to the constraint
+    \[
+    y_i (w \cdot x_i + b) \geq 1, \quad \text{with } y_i \in \{+1, -1\}.
+    \]
+    Since the margin is proportional to $\frac{1}{||w||}$
+    As distance $d$ of any point $x$ from the hyperplane is
+    \[
+    d=\frac{|w \cdot x + b}{||w||}
+    \]
+\end{itemize}
+
+\subsection{Support Vectors}
+\begin{itemize}
+    \item \textbf{Definition:} Support vectors are the data points that are closest to the hyperplane and directly influence its position and orientation.
+    \item \textbf{Properties:}
+    \begin{itemize}
+        \item These are the “hardest” points to classify.
+        \item Removing the support vectors would change the decision boundary.
+        \item They contribute to constructing the SVM classifier.
+    \end{itemize}
+    \item \textbf{Visualization:} In a 2D or 3D feature space, the support vectors lie on the margins of the “street.”
+    \item \textbf{Decision Function:} The decision function is typically specified by this (usually small) subset of training samples.
+\end{itemize}
+
+\section{SVM Variants}
+
+\subsection{Hard-Margin SVM}
+\begin{itemize}
+    \item \textbf{Definition:} Used when classes are perfectly linearly separable, meaning no training sample lies on the wrong side of the margin (the “street”).
+    \item \textbf{Prediction Model:} The linear classifier is defined as
+    \[
+    y(x) = w \cdot x + b,
+    \]
+    with the decision boundary at \(y(x)=0\). For training samples,
+    \[
+    \begin{array}{ll}
+    \text{if } x_i \text{ is group A:} & w \cdot x_i + b \geq 1, \\
+    \text{if } x_i \text{ is group B:} & w \cdot x_i + b \leq -1,
+    \end{array}
+    \]
+    or combined:
+    \[
+    y_i (w \cdot x_i + b) \geq 1.
+    \]
+    \item \textbf{Optimization Problem:}
+    \[
+    \min_{w,b} \frac{1}{2}\|w\|^2 \quad \text{subject to } y_i (w \cdot x_i + b) \geq 1.
+    \]
+    \item \textbf{Support Vectors:} The training examples on the margins that contribute to the final decision boundary are the support vectors.
+\end{itemize}
+
+\subsection{Soft-Margin SVM}
+\begin{itemize}
+    \item \textbf{Definition:} Used when classes overlap or data is noisy. It allows some training samples to be on the wrong side of the margin.
+    \item \textbf{Optimization Problem:}
+    \[
+    \min_{w,b} \frac{1}{2}\|w\|^2 + C \sum_{i=1}^{n} \xi_i,
+    \]
+    subject to
+    \[
+    y_i (w \cdot x_i + b) \geq 1 - \xi_i, \quad \xi_i \geq 0,
+    \]
+    where \(\xi_i\) are slack variables that penalize misclassification, and \(C>0\) is a hyperparameter controlling the trade-off between margin maximization and error penalty.
+\end{itemize}
+
+\section{Training}
+\subsection{Dual Formulation of SVM}
+    \begin{itemize}
+       \item \textbf{Lagrangian:} The SVM problem can be reformulated using Lagrange multipliers:
+        \[
+        L(w, b, \alpha) = \frac{1}{2}\|w\|^2 - \sum_{i=1}^{n} \alpha_i \Bigl[y_i (w \cdot x_i + b) - 1\Bigr],
+        \]
+        with constraints \(\alpha_i \geq 0\). The Lagrangian allows us to move from a constrained optimization problem to an unconstrained optimization problem by introducing the \(\alpha_i\) terms as multipliers for the constraints.
+    
+        \begin{itemize}
+            \item \textbf{First term:} 
+                \begin{itemize}
+                    \item \[
+                          \frac{1}{2}\|w\|^2
+                          \]
+                    \item This term corresponds to the objective of minimizing the norm of the weight vector \(w\).
+                    \item Minimizing \(\|w\|^2\) encourages a larger margin between the classes.
+                \end{itemize}
+                
+            \item \textbf{Second term:} 
+                \begin{itemize}
+                    \item \[
+                          -\sum_{i=1}^{n} \alpha_i \Bigl[y_i (w \cdot x_i + b) - 1\Bigr]
+                          \]
+                    \item This term enforces the constraints \(y_i (w \cdot x_i + b) \geq 1\).
+                    \item Each \(\alpha_i\) is a Lagrange multiplier associated with the constraint for a particular data point.
+                    \item The value of \(\alpha_i\) determines how strongly the constraint for data point \(i\) is enforced.
+                \end{itemize}
+    
+            \item \textbf{KKT Conditions:} 
+                \begin{itemize}
+                    \item \(\alpha_i \geq 0\)
+                    \item \(y_i (w \cdot x_i + b) - 1 \geq 0\),
+                    \item \(\alpha_i \Bigl[y_i (w \cdot x_i + b) - 1\Bigr] = 0\).
+                \end{itemize}
+                
+            \item \textbf{Purpose:} 
+                \begin{itemize}
+                    \item The Lagrangian formulation transforms the constrained optimization problem into an unconstrained one.
+                    \item By solving this Lagrangian, we determine the optimal weights \(w\), bias \(b\), and Lagrange multipliers \(\alpha_i\).
+                    \item Only the support vectors (data points with \(\alpha_i > 0\)) influence the decision boundary.
+                \end{itemize}
+        \end{itemize}
+    \item \textbf{Derivatives:} Setting the derivatives with respect to \(w\) and \(b\) to zero gives:
+    \[
+    \frac{\partial L}{\partial w} = 0 \Rightarrow w = \sum_{i=1}^{n} \alpha_i y_i x_i, \quad \frac{\partial L}{\partial b} = 0 \Rightarrow \sum_{i=1}^{n} \alpha_i y_i = 0.
+    \]
+    \item \textbf{Dual Problem (Hard-Margin SVM):}
+    \[
+    \begin{aligned}
+    \max_{\alpha} \quad & \sum_{i=1}^{n} \alpha_i - \frac{1}{2}\sum_{i=1}^{n}\sum_{j=1}^{n} \alpha_i \alpha_j y_i y_j \, (x_i \cdot x_j) \\
+    \text{s.t.} \quad & \alpha_i \geq 0, \quad \sum_{i=1}^{n} \alpha_i y_i = 0.
+    \end{aligned}
+    \]
+     \item \textbf{Dual Problem (Soft-Margin SVM):}
+    \begin{itemize}
+        \item Same objective as hard-margin.
+        \item Additional constraint: \(0\le \alpha_i \le C\) (allows controlled margin violations).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Weights and Bias}
+\begin{itemize}
+    \item Once the optimization problem is solved, most \(\alpha_i\) will be zero. The samples with nonzero \(\alpha_i\) are the        \emph{support vectors}. The weight vector \(w\) is then computed as a weighted sum of these support vectors:
+    \[
+    w = \sum_{i=1}^{n} \alpha_i \, y_i \, x_i.
+    \]
+    \item The bias \(b\) is calculated by taking the average over the support vectors:
+    \[
+    b = \frac{1}{N_S} \sum_{i \in S} \left( y_i - \sum_{j \in S} \alpha_j \, y_j \, (x_i \cdot x_j) \right),
+    \]
+    where \(S\) is the set of indices for the support vectors and \(N_S\) is the number of support vectors.
+\end{itemize}
+
+\subsection{Prediction Model}
+\begin{itemize}
+    \item \textbf{Linear Case:} The prediction function is
+    \[
+    y(x) = \sum_{i=1}^{n} \alpha_i y_i \, (x_i \cdot x) + b.
+    \]
+    \item \textbf{Non-linear Case:} With a feature transformation \(\phi(x)\) (or by using a kernel function \(K(x,z)=\phi(x)\cdot \phi(z)\)), the prediction becomes
+    \[
+    y(x) = \sum_{i=1}^{n} \alpha_i y_i \, K(x_i,x) + b.
+    \]
+\end{itemize}
+
+\section{Kernel Trick}
+\begin{itemize}
+    \item \textbf{Purpose:} Enables algorithms like SVMs to handle non-linearly separable data by implicitly mapping it to a higher-dimensional space. (They aren't literally mapped, the kernel function simulates the effect of mapping the data into a higher-dimensional space).
+    \item \textbf{Definition:} A kernel function computes the dot product in the transformed feature space without explicitly calculating the transformation:
+    \[
+    K(x, z) = \phi(x) \cdot \phi(z)
+    \]
+    where $x$, $y$ are two data points, and $K(x, z)$ is how close they are (higher value indicate they are simmilar)
+    \item \textbf{Common Kernels:}
+    \begin{itemize}
+        \item \textbf{Linear Kernel:} Computes the direct dot product of two input vectors in their original space:
+        \[
+        K(x, z) = x \cdot z
+        \]
+        \item \textbf{Polynomial Kernel:} Introduces non-linear transformations by raising the dot product to a power \(d\) and optionally adding a constant offset:
+        \[
+        K(x, z) = (x \cdot z + 1)^d
+        \]
+        where \(d\) is the polynomial degree (hyperparameter). Higher \(d\) adds more complexity to the feature space.
+        \item \textbf{RBF (Gaussian) Kernel:} Measures similarity based on Euclidean distance and introduces a Gaussian transformation:
+        \[
+        K(x, z) = \exp\left(-\gamma \|x - z\|^2\right)
+        \]
+        or equivalently:
+        \[
+        K(x, z) = \exp\left(-\frac{\|x - z\|^2}{2\sigma^2}\right)
+        \]
+        where \(\gamma = \frac{1}{2\sigma^2}\) controls the kernel width. A small \(\gamma\) considers faraway points similar, while a large \(\gamma\) focuses on nearby points.
+    \end{itemize}
+\end{itemize}
+
+\section{Multi-class Classification}
+
+\subsection{One-vs-One Approach}
+\begin{itemize}
+    \item Train an SVM for every pair of classes. For \(k\) classes, this results in \(\frac{k(k-1)}{2}\) classifiers.
+    \item The final prediction is usually determined by majority voting or a max-wins strategy.
+\end{itemize}
+
+\subsection{One-vs-All Approach}
+\begin{itemize}
+    \item Train one SVM per class, each separating one class from the rest.
+    \item The final prediction is based on the highest decision function value.
+\end{itemize}
+
+\section{Pros and Cons of Using SVM}
+
+\subsection{Pros}
+\begin{itemize}
+    \item Very effective in high-dimensional spaces.
+    \item Works well when there are more features than training examples.
+    \item Memory efficient because the decision boundary is determined solely by the support vectors.
+    \item Outliers have less influence since only support vectors determine the boundary.
+    \item The results are explainable.
+\end{itemize}
+
+\subsection{Cons}
+\begin{itemize}
+    \item Training can be time-consuming for large datasets.
+    \item Sensitive to the choice of hyperparameters (e.g., \(C\), \(\gamma\)).
+    \item Selecting the appropriate kernel function can be challenging.
+\end{itemize}
+
+\end{document}

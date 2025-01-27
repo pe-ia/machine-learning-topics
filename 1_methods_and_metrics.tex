@@ -1,0 +1,271 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath, amssymb, graphicx, hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Methods and Metrics for Evaluating Machine Learning Models}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Evaluating machine learning models is critical to ensure their effectiveness and suitability for real-world applications. This document outlines commonly used methods and metrics, along with intuitive examples.
+\section{Evaluation Methods and Model Generalization}
+
+In building and assessing predictive models, it is important not only to evaluate performance using reliable methods but also to understand and improve the model’s ability to generalize to unseen data. This section describes several evaluation methods—including train-test splits, cross-validation techniques, and bootstrap sampling—as well as key concepts related to generalization and overfitting.
+
+\subsection{Train-Test Split}
+\begin{itemize}
+    \item \textbf{Description:} Divide the dataset into training and test sets (e.g., an 80/20 split). The model is trained on the training set and its performance is evaluated on the test set.
+    \item \textbf{Key Point:} The test set represents unseen data and is crucial for assessing generalization.
+    \item \textbf{Example:} Predicting house prices by training on historical sales data and testing on a set of unseen listings.
+\end{itemize}
+
+\subsection{Validation Approaches}
+Since the true test error is unknown, various techniques are used to estimate it. Two common approaches are using a dedicated \textbf{validation set} and employing cross-validation methods.
+
+\subsection{Validation vs. Test Sets}
+\begin{itemize}
+    \item \textbf{Validation Set:} Used during model training to fine-tune hyperparameters and prevent overfitting. It provides feedback on generalization before testing.
+    \item \textbf{Test Set:} Held back until the very end to assess the model's performance on truly unseen data, simulating real-world scenarios.
+\end{itemize}
+
+\subsubsection{Validation Set Approach}
+\begin{itemize}
+    \item \textbf{Description:} Split the data into training and validation sets. The training set is used to build the model while the validation set provides an estimate of the model’s performance on unseen data.
+    \item \textbf{Drawbacks:} 
+    \begin{itemize}
+        \item Performance depends on how the data is split.
+        \item Fewer data points are available for training.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Cross-Validation (CV)}
+Cross-validation techniques provide more stable and reliable estimates of test error by utilizing different splits of the data.
+
+\paragraph{K-Fold Cross-Validation}
+\begin{itemize}
+    \item \textbf{Description:} The dataset is divided into $k$ equally sized folds. The model is trained on $k-1$ folds and validated on the remaining fold. This process is repeated $k$ times so that each fold is used as the validation set once.
+    \item \textbf{Calculation:} The cross-validation mean squared error (MSE) is computed as:
+    \[
+    \text{MSE}_{\text{CV}} = \frac{1}{k} \sum_{j=1}^k \text{MSE}_j
+    \]
+    \item \textbf{Benefit:} Reduces the impact of variability due to a single train-test split and ensures that all data points contribute to both training and validation.
+    \item \textbf{Example:} Using 10-fold CV to test models for a loan approval system.
+\end{itemize}
+
+\paragraph{Leave-One-Out Cross-Validation (LOOCV)}
+\begin{itemize}
+    \item \textbf{Description:} A special case of $k$-fold CV where $k$ equals the number of data points ($n$). Each data point is used once as the validation set, while the remaining $n-1$ points serve as the training set.
+    \item \textbf{Calculation:} The LOOCV MSE is given by:
+    \[
+    \text{MSE}_{\text{LOOCV}} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+    \]
+    where $\hat{y}_{-i}$ is the prediction for the $i^{\text{th}}$ data point obtained from a model trained without that point.
+    \item \textbf{Benefit:} Provides an almost unbiased estimate of model performance by maximizing the use of available data.
+    \item \textbf{Drawback:} Computationally expensive for large datasets.
+    \item \textbf{Example:} Evaluating a medical diagnostic model on a small dataset of 50 patients, where each patient is used as the validation case in turn.
+\end{itemize}
+
+\subsection{Bootstrap Sampling}
+\begin{itemize}
+    \item \textbf{Description:} Create multiple new training and testing datasets by sampling with replacement from the original dataset. This method may include repeated entries in a given sample.
+    \item \textbf{Benefit:} Particularly useful for small datasets, as it allows multiple evaluations without permanently setting aside a validation or test set.
+    \item \textbf{Example:} Estimating error rates for medical diagnosis models with limited patient data.
+\end{itemize}
+
+\subsection{Generalization: Test vs. Training Error}
+\begin{itemize}
+    \item \textbf{Goal:} The primary goal is to achieve a low test error (e.g., test MSE) for reliable predictions on new, unseen data.
+    \item \textbf{Challenge:} Since the true test error is unknown during model training, training error (training MSE) is often used as a proxy, though it typically underestimates the error on unseen data.
+    \item \textbf{Overfitting:} Occurs when the model captures noise or overly complex patterns in the training data, leading to excellent performance on the training set but poor generalization to new data.
+    \item \textbf{Solution:} Methods such as using a validation set, cross-validation, or regularization help estimate the generalization error and mitigate overfitting.
+\end{itemize}
+
+\section{Metrics for Evaluation}
+\subsection{Classification Metrics}
+\begin{itemize}
+    \item \textbf{Accuracy:} Proportion of correct predictions among total predictions. 
+    \[ \text{Accuracy} = \frac{TP + TN}{TP + FP + FN + TN} = \frac{\text{correct predictions}}{\text{total predictions}}\]
+    \textit{Example:} 90 out of 100 emails correctly classified gives $90\%$ accuracy.
+
+    \item \textbf{Precision:} Measures the proportion of positive identifications that are correct. 
+    \[ \text{Precision} = \frac{TP}{TP + FP} = \frac{\text{correct positive predictions}}{\text{total positive predictions}} \]
+    \textit{Example:} In fraud detection, high precision ensures fewer false alarms.
+
+    \item \textbf{Recall (Sensitivity):} Measures the proportion of actual positives correctly identified. 
+    \[ \text{Recall} = \frac{TP}{TP + FN} = \frac{\text{correct positive predictions}}{\text{actual positive total}} \]
+    \textit{Example:} In cancer screening, high recall ensures fewer missed diagnoses.
+
+    \item \textbf{F1-Score:} Harmonic mean of precision and recall. 
+    \[
+    F1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+    \]
+    
+    \textit{Explanation:} The harmonic mean is a way to find an average that gives more weight to smaller values. For the F1-Score, it balances precision and recall, ensuring both are equally important. If one is very low, the F1-Score will also be low, making it useful for imbalanced datasets.
+
+    \item \textbf{ROC:} The ROC curve plots TPR (sensitivity) on the y-axis against FPR (1 - specificity) on the x-axis. 
+    
+    \item \textbf{AUC:} Area under ROC curve. Higher AUC values indicate a better ability to distinguish between positive and negative classes
+
+    \item \textbf{Confusion Matrix:} A table that summarizes correct and incorrect predictions for each class.
+    \[ \begin{array}{|c|c|c|} \hline
+      & \textbf{Predicted Positive} & \textbf{Predicted Negative} \\
+    \hline
+    \textbf{Actual Positive} & TP & FN \\
+    \hline
+    \textbf{Actual Negative} & FP & TN \\
+    \hline
+    \end{array} \]
+\end{itemize}
+
+\subsection{Regression Metrics}
+\begin{itemize}
+    \item \textbf{Mean Absolute Error (MAE):} Average of absolute differences between predictions and actual values. 
+    \[
+    MAE = \frac{1}{n} \sum_{i=1}^n |y_i - \hat{y}_i|
+    \]
+    
+    \textit{Explanation of terms:}
+    \begin{itemize}
+        \item \( n \): The total number of predictions or data points.
+        \item \( y_i \): The actual value for the \(i\)-th data point.
+        \item \( \hat{y}_i \): The predicted value for the \(i\)-th data point.
+        \item \( |y_i - \hat{y}_i| \): The absolute difference between the actual and predicted values for the \(i\)-th data point. This ensures that errors are always treated as positive values, regardless of whether the prediction is higher or lower than the actual value.
+        \item \( \frac{1}{n} \sum_{i=1}^n \): The average of all absolute differences across all data points.
+    \end{itemize}
+    
+    \textit{Example:} If you are predicting delivery times in minutes, the MAE will give you the average error in minutes, showing how far off your predictions are from the actual times on average.
+    
+    \item \textbf{Mean Squared Error (MSE):} Average of squared differences between predictions and actual values. 
+    \[
+    MSE = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2
+    \]
+
+    \textit{Why MSE is used over MAE:}
+    \begin{itemize}
+        \item \textbf{Sensitivity to Large Errors:} MSE gives more weight to larger errors due to squaring. This makes it more appropriate when larger errors need to be penalized more heavily.
+        \item \textbf{Mathematical Properties:} MSE is differentiable, making it useful for optimization techniques like gradient descent in machine learning.
+        \item \textbf{Example:} In energy consumption prediction, an occasional large error (e.g., a sudden spike) could have significant consequences, and MSE ensures such errors are not overlooked.
+    \end{itemize}
+    
+    \textit{Trade-Off:} While MSE emphasizes large errors, it can be sensitive to outliers. MAE might be preferred when all errors should contribute equally wit
+ \item \textbf{R-Squared ($R^2$):} Proportion of variance in the target variable explained by the model. 
+\[
+R^2 = 1 - \frac{\text{SS}_{\text{residual}}}{\text{SS}_{\text{total}}}
+\]
+
+\textit{Explanation:}
+\begin{itemize}
+    \item \(\text{SS}_{\text{total}}\) (Total Sum of Squares): Measures the total variation in the target variable (\(y\)) from its mean (\(\bar{y}\)). It is calculated as:
+    \[
+    \text{SS}_{\text{total}} = \sum_{i=1}^n (y_i - \bar{y})^2
+    \]
+    This represents the variability in the data without considering the model.
+
+    \item \(\text{SS}_{\text{residual}}\) (Residual Sum of Squares): Measures the variation in the target variable that is not explained by the model's predictions (\(\hat{y}_i\)). It is calculated as:
+    \[
+    \text{SS}_{\text{residual}} = \sum_{i=1}^n (y_i - \hat{y}_i)^2
+    \]
+    This represents the errors or residuals between actual and predicted values.
+
+    \item \textbf{Why $R^2$ is used:}
+    \begin{itemize}
+        \item It provides a simple way to interpret model performance, showing the proportion of variance explained by the model.
+        \item A higher $R^2$ indicates a better fit. For example, $R^2 = 0.85$ means 85\% of the variation in \(y\) is explained by the model, while 15\% remains unexplained.
+        \item It is useful for comparing models. A model with a higher $R^2$ typically explains more variance, suggesting better performance.
+    \end{itemize}
+\end{itemize}
+
+\textit{Example:} For predicting house prices, an $R^2$ of $0.90$ means the model explains 90\% of the variability in prices, indicating it captures most patterns in the data.
+
+\end{itemize}
+
+\section{Feature Selection and Regularization}
+\subsection{Feature Selection}
+\begin{itemize}
+    \item \textbf{Strategies:}
+    \begin{itemize}
+        \item Forward Selection: Start with no features and add the most relevant one iteratively.
+        \item Backward Selection: Start with all features and remove the least relevant one iteratively.
+        \item Best Subset Selection: Evaluate all combinations of features (computationally expensive).
+    \end{itemize}
+    \item \textbf{Metrics for Comparison:}
+    \begin{itemize}
+        \item \textbf{AIC (Akaike Information Criterion):}
+        \begin{itemize}
+            \item Balances model fit and complexity using the formula:
+                  \[
+                  \text{AIC} = 2k - 2\ln(L)
+                  \]
+                  where:
+                  \begin{itemize}
+                      \item \(k\): Number of parameters in the model.
+                      \item \(L\): Maximum likelihood of the model (how well the model fits the data).
+                  \end{itemize}
+            \item A lower AIC value indicates a better trade-off between goodness of fit and simplicity.
+        \end{itemize}
+        \item \textbf{BIC (Bayesian Information Criterion):}
+        \begin{itemize}
+            \item Similar to AIC but applies a stronger penalty for the number of parameters, calculated as:
+                  \[
+                  \text{BIC} = \ln(n)k - 2\ln(L)
+                  \]
+                  where:
+                  \begin{itemize}
+                      \item \(n\): Number of observations in the dataset.
+                      \item \(k\): Number of parameters in the model.
+                      \item \(L\): Maximum likelihood of the model.
+                  \end{itemize}
+            \item A lower BIC value favors simpler models, especially when \(n\) is large.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Key Differences:}
+    \begin{itemize}
+        \item AIC is more flexible and suitable for predictive purposes.
+        \item BIC favors simplicity more strongly, making it better for small datasets or discovering the true underlying model.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Regularization}
+\begin{itemize}
+    \item \textbf{Ridge Regression:} 
+    \begin{itemize}
+        \item Penalizes large coefficients using $L2$ regularization (squared value of coefficients).
+        \item Objective function (that's minimized):
+        \[
+        \text{RSS} + \lambda \sum_{j=1}^p \beta_j^2
+        \]
+        \item Here:
+        \begin{itemize}
+            \item $j$: Index of a predictor (feature) in the dataset.
+            \item $p$: Total number of predictors (features).
+            \item $\beta_j$: Coefficient of the $j$-th predictor.
+        \end{itemize}
+        \item $\lambda$ controls the penalty strength. Larger $\lambda$ shrinks coefficients more.
+        \item Useful for handling multicollinearity by reducing sensitivity to correlated predictors.
+    \end{itemize}
+    
+    \item \textbf{Lasso Regression:} 
+    \begin{itemize}
+        \item Encourages sparsity by penalizing the absolute values of coefficients ($L1$ regularization, absolute value of coefficients).
+        \item Objective function:
+        \[
+        \text{RSS} + \lambda \sum_{j=1}^p |\beta_j|
+        \]
+        \item Here:
+        \begin{itemize}
+            \item $j$: Index of a predictor (feature) in the dataset.
+            \item $p$: Total number of predictors (features).
+            \item $\beta_j$: Coefficient of the $j$-th predictor.
+        \end{itemize}
+        \item Shrinks some coefficients to zero, performing variable selection.
+        \item Useful when the dataset has many predictors but only a few are important.
+    \end{itemize}
+\end{itemize}
+
+
+\end{document}

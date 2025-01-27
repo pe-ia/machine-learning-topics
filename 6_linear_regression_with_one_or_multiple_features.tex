@@ -1,0 +1,372 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Linear Regression with One or Multiple Features}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\begin{itemize}
+    \item \textbf{Supervised Learning:} Predicting a continuous outcome from labeled training data.
+    \item \textbf{Regression vs. Classification:}
+    \begin{itemize}
+        \item \textbf{Regression:} Predicts a continuous value (e.g., sales).
+        \item \textbf{Classification:} Predicts a class or category (adaptations like logistic regression are used).
+    \end{itemize}
+    \item \textbf{Linear Regression:} 
+    \begin{itemize}
+        \item Widely used for modeling the relationship between a dependent variable (target) and one or more independent variables (features).
+        \item Can be univariate (single feature) or multivariate (multiple features).
+    \end{itemize}
+    \item \textbf{Example Introduced (Advertising Data):}
+    \begin{itemize}
+        \item Suppose we have data where:
+        \begin{itemize}
+            \item \(Y\) = \textit{Sales} (continuous outcome).
+            \item \(X_1\) = \textit{TV Advertising Budget}.
+            \item \(X_2\) = \textit{Radio Advertising Budget}.
+            \item \(X_3\) = \textit{Newspaper Advertising Budget}.
+            \item Plus a categorical feature: \textit{DayType} (Weekend or Weekday).
+        \end{itemize}
+        \item Goal: Predict \(\hat{Y}\) (sales) as a function of these advertising budgets and day type.
+    \end{itemize}
+\end{itemize}
+
+\section{The General Learning Problem}
+\begin{itemize}
+    \item \textbf{Model Assumption:} \(Y = f(X) + \varepsilon\)
+    \begin{itemize}
+        \item \(\mathbf{Y}\): Output (dependent variable).
+        \item \(\mathbf{X}\): Input features (independent variables).
+        \item \(f(\mathbf{X})\): Unknown true function to be approximated.
+        \item \(\varepsilon\): Error term (noise), typically assumed independent.
+    \end{itemize}
+    \item \textbf{Alternative View (Conditional Mean):} \(E(Y \mid X) = f(X)\)
+    \item \textbf{Prediction Goal:}
+    \begin{itemize}
+        \item Given a new \(\mathbf{X}_0\), predict \(\hat{Y} = f(\mathbf{X}_0)\) as close as possible to the true \(Y\).
+    \end{itemize}
+\end{itemize}
+
+\section{Linear Regression Models}
+\begin{itemize}
+    \item \textbf{Univariate (Single Feature):}
+    \begin{itemize}
+        \item \(\displaystyle Y = \beta_{0} + \beta_{1} X + \varepsilon\)
+        \item \(\beta_{0}\): Intercept
+        \item \(\beta_{1}\): Slope (change in \(Y\) per unit increase in \(X\))
+    \end{itemize}
+    \item \textbf{Multivariate (Multiple Features):}
+    \begin{itemize}
+        \item \(\displaystyle Y = X\beta + \varepsilon\)
+        \item \(X\): Design matrix (rows = observations, columns = features). Often includes a column of ones for the intercept.
+        \item \(\beta\): Coefficient vector (including intercept).
+        \item \(\varepsilon\): Residual noise.
+    \end{itemize}
+    \item \textbf{Categorical Features:}
+    \begin{itemize}
+        \item Some features are categorical (e.g., \textit{HasKids}, \textit{IsStudent}, or \textit{Weekend/Weekday} in our example).
+        \item Use one-hot encoding (indicator variables) or group-specific means.
+        \begin{itemize}
+            \item \(\displaystyle 1_{\{X=A\}} = \begin{cases}1 \quad \text{if }X=A \\ 0 \quad \text{otherwise}\end{cases}\)
+        \end{itemize}
+        \item Example of group-specific means:
+        \[
+        \text{Either } Y = \beta_{0}\,1_{\{X=A\}} + \beta_{1}\,1_{\{X=B\}} + \varepsilon 
+        \quad\text{or}\quad
+        Y = \beta_{0} + \beta_{1}\,1_{\{X=B\}} + \varepsilon.
+        \]
+        The latter is usually used as having a baseline group removes redundancy
+    \end{itemize}
+    \item \textbf{Complex Relationships:}
+    \begin{itemize}
+        \item \textbf{Interaction Terms:} \(Y = \beta_{0} + \beta_{1} X_{1} + \beta_{2} X_{2} + \beta_{3}(X_{1}\cdot X_{2}) + \varepsilon\).
+        \begin{itemize}
+            \item Captures the idea that the effect of one feature depends on the value of another.
+        \end{itemize}
+        \item \textbf{Nonlinear Transformations:} Use polynomial or other transformations (e.g., \(\log(X)\), \(\sqrt{X}\)) if the relationship is not purely linear.
+    \end{itemize}
+\end{itemize}
+
+\section{Building Models}
+\begin{itemize}
+    \item \textbf{Features to Include:} Decide which variables are relevant or potentially predictive.
+    \item \textbf{Data Transformation:} Consider logs, square roots, standardization, or polynomial terms if they help linearity.
+    \item \textbf{Interactions:} If the effect of one variable depends on another, include product terms.
+    \item \textbf{Visualization:} Plot \(y\) vs. each feature to see if relationships look linear (scatter plots, residual plots).
+    \item \textbf{Example (Advertising):}
+    \begin{itemize}
+        \item We might check if \(\text{Sales}\) vs. \(\log(\text{NewspaperBudget}+1)\) looks more linear than \(\text{Sales}\) vs. \(\text{NewspaperBudget}\).
+        \item We might include an interaction term between \(\text{TV}\) and \(\text{Radio}\) if we suspect combined effects.
+    \end{itemize}
+\end{itemize}
+
+\section{Cost Functions \& Error Metrics}
+\begin{itemize}
+    \item \textbf{Mean Squared Error (MSE):}
+    \[
+    J(w,b)=\frac{1}{2m} \sum_{i=1}^{m}\left(\hat{y}^{(i)}-y^{(i)}\right)^{2}
+    \]
+    \begin{itemize}
+        \item \(m\): Number of training examples.
+        \item Factor of \(\tfrac{1}{2}\) often used for convenience in derivative calculations.
+    \end{itemize}
+    \item \textbf{Residual Sum of Squares (RSS):}
+    \[
+    \mathrm{RSS}=\sum_{i=1}^{n}\left(y_{i}-\hat{y}_{i}\right)^{2}=\sum_{i=1}^{n}\left(y_{i}-x_{i}^{T}\beta\right)^{2}.
+    \]
+    \begin{itemize}
+        \item Equivalent to MSE up to a constant factor.
+    \end{itemize}
+\end{itemize}
+
+\section{Estimating Coefficients \& Likelihood Estimation}
+\begin{itemize}
+    \item \textbf{Ordinary Least Squares (OLS):}
+    \begin{itemize}
+        \item Minimizes RSS.
+        \item \(\displaystyle \hat{\beta}=(X^{T}X)^{-1}X^{T}Y\).
+        \item Incorporate \(\beta_0\) by having a column of ones in \(X\).
+        \item Predictions: \(\hat{Y} = X\hat{\beta}\).
+        \item \(\displaystyle \hat{Y} = \underbrace{X(X^{T}X)^{-1}X^{T}}_{H}\,Y,\) where \(H\) is the \textit{hat matrix}.
+    \end{itemize}
+    \item \textbf{Likelihood Function (Normal Errors):}
+    \begin{itemize}
+        \item For \(\varepsilon \sim \mathcal{N}(0,\sigma^2)\):
+        \[
+        p_Y(y_i \mid X)= \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{1}{2}\frac{(y_i - X_i^T\beta)^2}{\sigma^2}\right).
+        \]
+        \item The log-likelihood:
+        \[
+        \ell(\beta, \sigma^2) 
+        = -\frac{1}{2}\Bigl[n\log(\sigma^2) + \frac{1}{\sigma^2}\mathrm{RSS}\Bigr].
+        \]
+        \item Maximizing the likelihood or minimizing RSS yields the same OLS solution.
+    \end{itemize}
+\end{itemize}
+
+\section{Model Diagnostics \& Assumptions}
+\begin{itemize}
+    \item \textbf{Residuals:}
+    \[
+    e_{i} = y_{i} - \hat{y}_{i}.
+    \]
+    \item \textbf{Residual Standard Error:}
+    \[
+    \sqrt{\frac{\Sigma (y-\hat{y})^2}{\mathrm{df}}}
+    \]
+    \begin{itemize}
+        \item \(\mathrm{df}\): Degrees of freedom (number of observations minus number of estimated parameters).
+    \end{itemize}
+    \item \textbf{Linearity of Relationships:}
+    \begin{itemize}
+        \item Check scatter plots of residuals vs. features.
+    \end{itemize}
+    \item \textbf{No Perfect Multicollinearity:}
+    \begin{itemize}
+        \item Ensure features are not perfectly correlated (use correlation matrix or VIF).
+    \end{itemize}
+    \item \textbf{Homoscedasticity:}
+    \begin{itemize}
+        \item Residuals should have constant variance.
+        \item Plot residuals vs. fitted values; watch for systematic patterns.
+    \end{itemize}
+    \item \textbf{Normality of Residuals:}
+    \begin{itemize}
+        \item Residuals should be approximately normal.
+        \item Check Q-Q plot or histogram.
+        \item \textbf{Images:}
+        \begin{itemize}
+            \item \(\includegraphics[max width=\textwidth, center]{2025_01_17_e1e28b57f862829dd45dg-09(5)}\)
+            \item \(\includegraphics[max width=\textwidth, center]{2025_01_17_e1e28b57f862829dd45dg-09(2)}\)
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{No Autocorrelation:}
+    \begin{itemize}
+        \item Especially important for time-series data.
+        \item Residuals should not be correlated across observations.
+    \end{itemize}
+\end{itemize}
+
+\section{Hypothesis Testing \& Model Comparison}
+\begin{itemize}
+    \item \textbf{Coefficient Tests (t-test):}
+    \begin{itemize}
+        \item Null hypothesis \(H_0:\beta_j=0\).
+        \[
+        t = \frac{\beta_{j}}{SE(\beta_{j})}.
+        \]
+        \item Compare with t-distribution \(\mathrm{df}=n-p-1\).
+    \end{itemize}
+    \item \textbf{F-test (Nested Models):}
+    \[
+    F = \frac{(RSS_{M_{0}} - RSS_{M_{1}})/q}{RSS_{M_{1}}/(n-p-1)},
+    \]
+    \begin{itemize}
+        \item \(M_0\) = simpler (nested) model, \(M_1\) = more complex model.
+        \item \(q\) = number of parameters removed from \(M_1\) to get \(M_0\).
+    \end{itemize}
+\end{itemize}
+
+\section{Confidence Intervals}
+\begin{itemize}
+    \item Build intervals for coefficients to quantify uncertainty.
+    \item \textbf{Example (Advertising Data):}
+    \begin{itemize}
+        \item Intercept: \([6.130, 7.935]\) indicates average sales with no advertising.
+        \item TV Coefficient: \([0.042, 0.053]\) indicates each \$1000 spent on TV ads increases sales by 42--53 units (on average).
+    \end{itemize}
+\end{itemize}
+
+\section{Influential Points and Model Selection}
+\begin{itemize}
+    \item \textbf{Influential Points:}
+    \begin{itemize}
+        \item Points with unusually large residuals or high leverage can disproportionately affect the regression fit.
+        \item \textbf{Diagnostics:}
+        \begin{itemize}
+            \item \textbf{Cook's Distance:} Measures the change in all fitted values when a particular observation is removed. Large Cook's Distance values indicate observations that are highly influential.
+            \item \textbf{Leverage:} Observations with extreme predictor values have high leverage; they can have a significant effect on coefficient estimates.
+            \item \textbf{Studentized Residuals:} These are residuals divided by an estimate of their standard deviation. Extremely large absolute values can signal outliers.
+        \end{itemize}
+        \item \textbf{Remedies:}
+        \begin{itemize}
+            \item Investigate the data for errors or anomalies.
+            \item Consider robust regression techniques or transforming variables.
+            \item Assess whether to remove, reweight, or otherwise adjust influential observations when justified.
+        \end{itemize}
+    \end{itemize}
+    \item \textbf{Model Selection (within Linear Regression):}
+    \begin{itemize}
+        \item Evaluate models using both statistical tests and information criteria to balance fit and complexity.
+        \item \textbf{Statistical Testing:}
+        \begin{itemize}
+            \item Use t-tests for individual coefficients (\(t = \frac{\beta_j}{SE(\beta_j)}\)) to test whether predictors significantly contribute to the model.
+            \item Use F-tests to compare nested models.
+        \end{itemize}
+        \item \textbf{Information Criteria:}
+        \begin{itemize}
+            \item \textbf{AIC (Akaike Information Criterion):}
+            \begin{itemize}
+                \item Formula: 
+                \[
+                \text{AIC} = 2k - 2\ln(L)
+                \]
+                where:
+                \begin{itemize}
+                    \item \(\underbrace{k}_{\text{Number of parameters in the model}}\)
+                    \item \(\underbrace{L}_{\text{Maximum likelihood of the model}}\)
+                \end{itemize}
+                \item A lower AIC indicates a better trade-off between model fit and complexity.
+            \end{itemize}
+            \item \textbf{BIC (Bayesian Information Criterion):}
+            \begin{itemize}
+                \item Formula:
+                \[
+                \text{BIC} = \ln(n)k - 2\ln(L)
+                \]
+                where:
+                \begin{itemize}
+                    \item \(\underbrace{n}_{\text{Number of observations}}\)
+                    \item \(\underbrace{k}_{\text{Number of parameters}}\)
+                    \item \(\underbrace{L}_{\text{Maximum likelihood of the model}}\)
+                \end{itemize}
+                \item BIC imposes a stronger penalty for added parameters, favoring simpler models, especially with larger sample sizes.
+            \end{itemize}
+        \end{itemize}
+        \item Choose a model that balances goodness of fit with parsimony.
+    \end{itemize}
+\end{itemize}
+
+\section{Feature Selection and Regularization}
+\subsection{Feature Selection}
+\begin{itemize}
+    \item \textbf{Strategies (within the linear regression framework):}
+    \begin{itemize}
+        \item \textbf{Forward Selection:} Start with no features and add the most relevant predictor iteratively until no significant improvement is observed.
+        \item \textbf{Backward Selection:} Start with all predictors and remove the least significant one iteratively.
+        \item \textbf{Best Subset Selection:} Evaluate all possible combinations of predictors to find the subset that yields the best performance (computationally expensive for many predictors).
+    \end{itemize}
+    \item \textbf{Metrics for Comparison:}
+    \begin{itemize}
+        \item \textbf{AIC (Akaike Information Criterion):}
+        \begin{itemize}
+            \item Formula:
+            \[
+            \text{AIC} = 2k - 2\ln(L)
+            \]
+            where:
+            \begin{itemize}
+                \item \(\underbrace{k}_{\text{Number of parameters}}\)
+                \item \(\underbrace{L}_{\text{Maximum likelihood of the model}}\)
+            \end{itemize}
+            \item Lower AIC indicates a better model in terms of the trade-off between fit and complexity.
+        \end{itemize}
+        \item \textbf{BIC (Bayesian Information Criterion):}
+        \begin{itemize}
+            \item Formula:
+            \[
+            \text{BIC} = \ln(n)k - 2\ln(L)
+            \]
+            where:
+            \begin{itemize}
+                \item \(\underbrace{n}_{\text{Number of observations}}\)
+                \item \(\underbrace{k}_{\text{Number of parameters}}\)
+                \item \(\underbrace{L}_{\text{Maximum likelihood of the model}}\)
+            \end{itemize}
+            \item Lower BIC favors simpler models, particularly as the number of observations increases.
+        \end{itemize}
+        \item \textbf{Key Differences:}
+        \begin{itemize}
+            \item AIC is generally more flexible and tuned towards predictive performance.
+            \item BIC applies a stronger penalty for extra parameters, often leading to simpler models.
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Regularization}
+\begin{itemize}
+    \item \textbf{Ridge Regression:}
+    \begin{itemize}
+        \item Applies \(L2\) regularization to shrink coefficients and reduce model complexity.
+        \item Objective function minimized:
+        \[
+        \text{RSS} + \lambda \sum_{j=1}^p \beta_j^2,
+        \]
+        where:
+        \begin{itemize}
+            \item \(\underbrace{\lambda}_{\text{Penalty parameter controlling shrinkage}}\) determines the intensity of the regularization.
+            \item \(\underbrace{p}_{\text{Total number of predictors}}\)
+            \item \(\underbrace{\beta_j}_{\text{Coefficient of the }j\text{-th predictor}}\)
+        \end{itemize}
+        \item Particularly useful in the presence of multicollinearity.
+    \end{itemize}
+    \item \textbf{Lasso Regression:}
+    \begin{itemize}
+        \item Applies \(L1\) regularization to encourage sparsity in the model coefficients.
+        \item Objective function minimized:
+        \[
+        \text{RSS} + \lambda \sum_{j=1}^p |\beta_j|,
+        \]
+        where:
+        \begin{itemize}
+            \item \(\underbrace{\lambda}_{\text{Penalty parameter controlling the strength}}\) of the regularization.
+            \item \(\underbrace{p}_{\text{Total number of predictors}}\)
+            \item \(\underbrace{\beta_j}_{\text{Coefficient of the }j\text{-th predictor}}\)
+        \end{itemize}
+        \item Lasso can shrink some coefficients to zero, effectively performing variable selection.
+        \item Useful when only a few predictors are important.
+    \end{itemize}
+\end{itemize}
+
+\end{document}

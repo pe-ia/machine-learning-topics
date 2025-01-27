@@ -1,0 +1,403 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[version=4]{mhchem}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+\usepackage[export]{adjustbox}
+\usepackage{bbold}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Logistic and Softmax Regression}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Logistic Regression}
+
+\subsection{Definition and Purpose}
+\begin{itemize}
+    \item \textbf{Definition:} Logistic regression is a supervised learning algorithm used for binary classification problems. It predicts the probability that a given input belongs to one of two classes (e.g., 0 or 1).
+    \item \textbf{Purpose:} Unlike linear regression, which predicts continuous outputs, logistic regression maps outputs to a range between 0 and 1 using the sigmoid function, ensuring they represent valid probabilities.
+    \item \textbf{Use:} It is a supervised learning model specialized for binary classification tasks.
+\end{itemize}
+
+\subsection{Mathematical Detail}
+\begin{itemize}
+    \item \textbf{Sigmoid Function:} The core of logistic regression is the sigmoid (or logistic) function:
+    \[
+    g(z)=\frac{1}{1+e^{-z}},
+    \]
+    where \(z=X\beta\) (i.e. \(z = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \ldots\)). This function ensures that the output is always between 0 and 1.
+    \item \textbf{Prediction:} The probability of class \( y = 1 \) is given by 
+    \[
+    P(y=1 \mid x)=g(z).
+    \]
+    If \(P(y=1 \mid x) > 0.5\), the model predicts class 1; otherwise, it predicts class 0.
+    \item \textbf{Decision Boundary:} The decision boundary is typically at \( g(z)=0.5 \), which corresponds to \(z=0\).
+\end{itemize}
+
+\subsection{Probability vs. Odds}
+\begin{itemize}
+    \item \textbf{Probability:} Defined as the number of favourable cases divided by the total number of cases, \(\displaystyle P(x)\in[0,1]\).
+    \item \textbf{Odds:} Defined as 
+    \[
+    o=\frac{P(x)}{1-P(x)},
+    \]
+    which can take values in \((0,\infty)\). 
+    \item Relating probability and odds helps interpret logistic regression coefficients in terms of log-odds.
+    \item \textbf{Intuitive Explanation:} If probability is "How likely am I to win?" then odds are "How many wins do I get for each loss?" For example, \(P(x) = 0.8\) (80\% chance to win) corresponds to odds of \(o = 4\), meaning you win 4 times for every 1 loss.
+\end{itemize}
+
+\subsection{Sigmoid Function and the Logit Inverse}
+\begin{itemize}
+    \item The sigmoid (logistic) function transforms any real number into a probability:
+    \[
+    g(x)=\frac{1}{1+e^{-x}}, \quad 0<g(x)<1.
+    \]
+    \item \textbf{Why use the sigmoid function?} 
+    \begin{itemize}
+        \item In regression, we obtain a value in \(\mathbb{R}\). For binary classification, we need a probability in \([0,1]\). 
+        \item The sigmoid function provides this mapping.
+    \end{itemize}
+    \item \textbf{Logit Function:} The inverse of the sigmoid function is the logit function:
+    \[
+    \operatorname{logit}(p)=\log\left(\frac{p}{1-p}\right)\quad \in \mathbb{R}.
+    \]
+    \item \textbf{Derivation of the Sigmoid from the Logit:}
+    \[
+    \begin{array}{rcl}
+    \operatorname{logit}(P(x)) &=& \log \left(\frac{P(x)}{1-P(x)}\right) \\[1mm]
+    X &=& \log \left(\frac{P(x)}{1-P(x)}\right) \\[1mm]
+    e^{X} &=& \frac{P(x)}{1-P(x)} \\[1mm]
+    \frac{1}{e^{X}} &=& \frac{1-P(x)}{P(x)} \\[1mm]
+    \frac{1}{e^{X}} + 1 &=& \frac{1}{P(x)} \\[1mm]
+    \frac{1+e^{X}}{e^{X}} &=& \frac{1}{P(x)} \\[1mm]
+    P(x) &=& \frac{e^{X}}{1+e^{X}} = \frac{1}{1+e^{-X}}.
+    \end{array}
+    \]
+    (In the last step, multiply top and bottom by \(\frac{e^{-X}}{e^{-X}}\).)
+\end{itemize}
+
+\subsection{How Logistic Regression Chooses What Class to Predict}
+\begin{itemize}
+    \item A threshold is set for the output of the sigmoid function (commonly 0.5).
+    \item If \( g(z) \ge 0.5 \), predict class 1 (positive).
+    \item If \( g(z) < 0.5 \), predict class 0 (negative).
+    \item The threshold can be adjusted for specific applications (e.g., spam detection might use a higher threshold to reduce false positives).
+\end{itemize}
+
+\subsection{Loss Function and Cost in Logistic Regression}
+\begin{itemize}
+    \item \textbf{Binary Cross-Entropy (Logistic) Loss:} For a single training example:
+    \[
+    L\left(f_{\mathbf{w}, b}(\mathbf{x}^{(i)}),y^{(i)}\right)=
+    \begin{cases}
+    -\log\left(f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\right) & \text{if } y^{(i)}=1, \\[1mm]
+    -\log\left(1-f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\right) & \text{if } y^{(i)}=0.
+    \end{cases}
+    \]
+
+    \item In a unified form:
+    \[
+    L\left(f_{\mathbf{w}, b}(\mathbf{x}^{(i)}),y^{(i)}\right) 
+    = -y^{(i)} \underbrace{\log\left(f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\right)}_{\text{Cost for predicting 1}} 
+      - (1-y^{(i)}) \underbrace{\log\left(1-f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\right)}_{\text{Cost for predicting 0}}.
+    \]
+
+    \item The total cost function over \( m \) examples:
+    \[
+    J(\mathbf{w}, b) = \frac{1}{m} \sum_{i=1}^{m} 
+    \underbrace{\bigl[-y^{(i)} \log\left(f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\right) 
+      - (1-y^{(i)}) \log\left(1-f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\right)\bigr]}_{\text{Loss for example \(i\)}}.
+    \]
+
+    \item In practice, the cost function is often derived from the log-likelihood:
+    \[
+    L(\beta, y) = \sum_{i=1}^{n} \underbrace{\Bigl[y_{i}\log\bigl(p(x_i)\bigr) + (1-y_{i})\log\bigl(1-p(x_i)\bigr)\Bigr]}_{\text{Log-likelihood for all examples}}.
+    \]
+
+    \item \textbf{Explanation of Terms:}
+    \begin{itemize}
+        \item \(f_{\mathbf{w}, b}(\mathbf{x}^{(i)})\): The predicted probability that \(y^{(i)} = 1\) for the \(i\)-th training example.
+        \item \begin{itemize}
+            \item $\mathbf{w}$ are the weights
+            \item $b$ is the bias term or intercept, which shifts the decision boundary
+        \end{itemize}
+        \item \(y^{(i)}\): The true label, either 0 or 1, for the \(i\)-th training example.
+        \item \(-\log(\cdot)\): Penalizes the model more heavily for being confident in incorrect predictions.
+    \end{itemize}
+
+    \item \textbf{Intuitive Explanation:}
+    \begin{itemize}
+        \item The binary cross-entropy loss measures how well the predicted probabilities match the true labels.
+        \item If the model predicts a probability close to the correct label (e.g., 0.95 for \(y = 1\)), the loss is small.
+        \item If the model confidently predicts the wrong outcome (e.g., 0.01 for \(y = 1\)), the loss is large due to the \(-\log\) term.
+    \end{itemize}
+
+    \item \textbf{Why does \(-\log(\cdot)\) punish confident wrong predictions heavily?}
+    \begin{itemize}
+        \item For a true label \(y = 1\) and a predicted probability \(f_{\mathbf{w}, b}(\mathbf{x})\):
+        \[
+        -\log(f_{\mathbf{w}, b}(\mathbf{x})) \to \infty \quad \text{as } f_{\mathbf{w}, b}(\mathbf{x}) \to 0.
+        \]
+        \item This behavior penalizes predictions that are confident but wrong, forcing the model to improve its probabilities near the correct labels.
+    \end{itemize}
+
+    \item \textbf{What does convex mean?}
+    \begin{itemize}
+        \item A function is convex if any line segment drawn between two points on the curve lies above or on the curve.
+        \item Convexity ensures that gradient descent will find the global minimum of the loss function.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Interpretation of Coefficients}
+\begin{itemize}
+    \item A one unit change in a feature \(x_1\) results in:
+    \begin{itemize}
+        \item A change of \(\beta_1\) in the log-odds:
+        \[
+        \log\left(\frac{p(x)}{1-p(x)}\right) = X\beta.
+        \]
+        \item A multiplicative change in the odds by a factor of \(e^{\beta_1}\).
+        \item \(\beta_1\) is the log-odds ratio, and \(e^{\beta_1}\) is the odds ratio.
+    \end{itemize}
+    \item \textbf{Nonlinear in Probability:} While log-odds vary linearly with \(x\), the probability itself changes nonlinearly due to the sigmoid function.
+\end{itemize}
+
+\pagebreak
+
+\section{Softmax Regression}
+
+\subsection{Definition and Purpose}
+\begin{itemize}
+    \item \textbf{Definition:} Softmax regression is a generalization of logistic regression to multi-class classification. 
+    \item \textbf{Purpose:} Used when the outcome can belong to one of several classes (e.g., dog, cat, or bird).
+\end{itemize}
+
+\subsection{Mathematical Detail}
+\begin{itemize}
+    \item \textbf{Softmax Function:} The probability that input \( x \) belongs to class \( k \) is:
+    \[
+    P(Y=k\mid X=x)=\frac{e^{X\beta^{k}}}{\sum_{c=1}^{K} e^{X\beta^{c}}}.
+    \]
+    \begin{itemize}
+        \item \(X\beta^{k}\) is often called the logit for class \(k\).
+        \item The model output is treated as a vector of logits \(\bigl[X\beta^1, X\beta^2, \ldots, X\beta^K\bigr]\).
+        \item Exponentiating each logit gives unnormalized odds.
+        \item Dividing by the sum of these odds normalizes them to a proper probability distribution.
+        \item The predicted class is the one with the highest probability.
+    \end{itemize}
+    \item \textbf{Cross-Entropy Loss:} For one example, the loss is:
+    \[
+    L_{\mathrm{CE}}=-\sum_{i=1}^{n} t_i \log(p_i),
+    \]
+    where \( t_i \) is the one-hot encoded true label (1 for the correct class, 0 otherwise) and \( p_i \) is the predicted probability for the \(i\)-th class.
+    \item \textbf{Explanation of Terms:}
+    \begin{itemize}
+        \item \(K\) is the total number of classes.
+        \item The denominator \(\sum_{c=1}^K e^{X \beta^c}\) ensures all class probabilities sum to 1.
+        \item The cross-entropy loss punishes the model heavily when it assigns low probability to the true class.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Multinomial Logistic Regression}
+\begin{itemize}
+    \item Multinomial Logistic Regression handles multi-class classification by comparing each non-baseline class \(k \neq K\) to a chosen baseline class \(K\).
+    \item Using this log-odds relationship, the probabilities for non-baseline classes are expressed as:
+    \[
+    P(Y=k \mid X=x) = \frac{e^{X \beta^k}}{1 + \sum_{c=1}^{K-1} e^{X \beta^c}}, \quad \text{for } k \neq K.
+    \]
+    The probability of the baseline class \(K\) is:
+    \[
+    P(Y=K \mid X=x) = \frac{1}{1 + \sum_{c=1}^{K-1} e^{X \beta^c}}.
+    \]
+    \item \textbf{Note:} Softmax regression does not use a baseline. It computes probabilities for all classes directly.
+\end{itemize}
+
+\subsection{Cost Function for Multi-Class Classification}
+\begin{itemize}
+    \item The overall cost is the mean cross-entropy loss over all training examples.
+    \item For one example, the cross-entropy loss is:
+    \[
+    L_{\mathrm{CE}}=-\sum_{i=1}^{n} t_i \log(p_i),
+    \]
+    where \(n\) is the number of classes and \(t_i\) is the target (1 for the correct class, 0 otherwise).
+\end{itemize}
+
+\subsection{Important Note on Label Encoding}
+\begin{itemize}
+    \item For multi-class classification, use one-hot encoding:
+    \begin{itemize}
+        \item Each data point's label is represented by a vector with a single 1 and the rest 0s.
+        \item Numerical labels like 0,1,2,\(\ldots\) can mislead the model if interpreted as ordinal.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Real-World Example}
+\begin{itemize}
+    \item \textbf{Image Classification:} Classify an image as dog, cat, or bird based on features (e.g., shape, color).
+    \begin{itemize}
+        \item If the softmax probabilities are \([0.1, 0.8, 0.1]\), the model predicts "cat" with 80\% confidence.
+    \end{itemize}
+\end{itemize}
+
+\section{Advantages and Limitations}
+
+\subsection{Advantages}
+\begin{itemize}
+    \item \textbf{Logistic Regression:} Simple, efficient, interpretable, and widely applicable for binary classification.
+    \item \textbf{Softmax Regression:} Naturally handles multi-class problems and provides a clear probability distribution across classes.
+\end{itemize}
+
+\subsection{Limitations}
+\begin{itemize}
+    \item \textbf{Linear Decision Boundary:} Both logistic and softmax assume a linear decision boundary in the feature space, which may be insufficient for highly nonlinear problems.
+    \item \textbf{Feature Scaling:} Both models are sensitive to unscaled features; normalization or standardization is often recommended.
+\end{itemize}
+
+\section{Classification Problems}
+
+\subsection{Binary Classification Example (Logistic Regression)}
+\begin{itemize}
+    \item Predict whether a person will default on a credit card based on annual income and balance.
+    \item The outcome is binary: default (class 1) or no default (class 0).
+    \item \textbf{Model Behavior:}
+    \begin{itemize}
+        \item The logistic model outputs \(p(\text{default}\mid x)\) for each individual.
+        \item If \(p(\text{default}\mid x)\ge 0.5\), predict class 1 (default); otherwise, 0.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Multi-Class Example (Softmax Regression)}
+\begin{itemize}
+    \item Predict a medical condition based on symptoms (e.g., stroke, drug overdose, seizure).
+    \item The outcome has three categories/classes.
+    \item \textbf{Model Behavior:}
+    \begin{itemize}
+        \item Softmax model outputs \(\bigl[p(\text{stroke}\mid x),\, p(\text{overdose}\mid x),\, p(\text{seizure}\mid x)\bigr]\).
+        \item The predicted condition is the class with the highest probability.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Multinomial Example (Multinomial Logistic Regression)}
+\begin{itemize}
+    \item Suppose we wish to classify vehicles into \(\{\text{car}, \text{truck}, \text{motorcycle}\}\).
+    \item \textbf{Baseline Class Approach:}
+    \begin{itemize}
+        \item Choose "motorcycle" as the baseline class.
+        \item Fit separate log-odds models comparing car vs. motorcycle and truck vs. motorcycle.
+        \item Convert to probabilities for all three classes by normalizing appropriately.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Intuitive Explanation of Decision Boundaries}
+\begin{itemize}
+    \item \textbf{Logistic Regression (Binary):} The decision boundary is where \(g(z)=0.5\), i.e. \(z=0\). In two dimensions, this is a line; in higher dimensions, a hyperplane.
+    \item \textbf{Softmax (Multi-Class):} The decision boundary in multi-class classification separates the feature space into multiple regions, each corresponding to one class. These boundaries occur where two (or more) classes have equal predicted probabilities.
+\end{itemize}
+
+\section{Logistic Regression Insights and Odds \& Log-Odds}
+
+\subsection{Why Not Use Linear Regression for Probabilities?}
+\begin{itemize}
+    \item Linear regression can produce values outside the valid probability range [0,1].
+    \item Logistic regression’s sigmoid ensures outputs remain in [0,1].
+\end{itemize}
+
+\subsection{Sigmoid Function Benefits}
+\begin{itemize}
+    \item Keeps outputs within [0,1].
+    \item Provides a smooth, continuous transition from near 0 to near 1 as input \(z\) changes.
+\end{itemize}
+
+\subsection{Odds and Log-Odds}
+\begin{itemize}
+    \item \textbf{Definition of Odds:} 
+    \[
+    \text{Odds} = \frac{P(x)}{1-P(x)}.
+    \]
+    \item \textbf{Log-Odds:} Taking the natural logarithm:
+    \[
+    \log\left(\frac{P(x)}{1-P(x)}\right) = X\beta.
+    \]
+    \item \textbf{Interpretation of Coefficients:}
+    \begin{itemize}
+        \item A one-unit increase in a feature increases the log-odds by \(\beta\).
+        \item The odds change by a factor of \(\exp(\beta)\).
+        \item This is simpler to interpret than direct probability changes because it preserves linearity in the log-odds space.
+    \end{itemize}
+\end{itemize}
+
+\section{Training and Evaluation}
+
+\subsection{Training Objective}
+\begin{itemize}
+    \item Maximize the likelihood of the observed class labels (or equivalently, minimize the cross-entropy loss).
+    \item For logistic regression, the cost function is based on the logistic (binary cross-entropy) loss.
+    \item For softmax (multi-class), the cost function is the multi-class cross-entropy.
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+\begin{itemize}
+    \item \textbf{Confusion Matrix:} Counts true positives, false positives, true negatives, false negatives (extended for multi-class).
+    \item \textbf{Accuracy:} Fraction of correct predictions.
+    \item \textbf{Precision, Recall, F1 Score:} Especially important for imbalanced datasets.
+    \item \textbf{Decision Boundaries:} Visualizing them can help understand model performance (in low dimensions).
+\end{itemize}
+
+\section{Terms in the Sigmoid Function:}
+\begin{itemize}
+    \item \(X\): The \textbf{feature matrix} or input data.
+    \begin{itemize}
+        \item Represents the predictors or independent variables used for making predictions.
+        \item For \(n\) examples and \(m\) features, \(X\) is an \(n \times m\) matrix:
+        \[
+        X = \begin{bmatrix}
+        x_{11} & x_{12} & \dots & x_{1m} \\
+        x_{21} & x_{22} & \dots & x_{2m} \\
+        \vdots & \vdots & \ddots & \vdots \\
+        x_{n1} & x_{n2} & \dots & x_{nm}
+        \end{bmatrix}.
+        \]
+        Each row corresponds to an observation, and each column corresponds to a feature.
+    \end{itemize}
+    \item \(\beta\): The \textbf{coefficient vector} (or weight vector).
+    \begin{itemize}
+        \item Represents the weights assigned to each feature in the model.
+        \item For \(m\) features, \(\beta\) is a column vector with \(m + 1\) elements (including the intercept term \(\beta_0\)):
+        \[
+        \beta = \begin{bmatrix}
+        \beta_0 \\
+        \beta_1 \\
+        \beta_2 \\
+        \vdots \\
+        \beta_m
+        \end{bmatrix}.
+        \]
+        \item \textbf{Intercept (\(\beta_0\)):} A constant term that allows the model to fit data where the decision boundary does not pass through the origin.
+        \item \textbf{Feature weights (\(\beta_1, \beta_2, \dots, \beta_m\)):} Control the influence of each corresponding feature \(x_1, x_2, \dots, x_m\) on the prediction.
+    \end{itemize}
+    \item \textbf{Exponentiating a Matrix:} In logistic regression, \(e^{-(X\beta)}\) requires an understanding of matrix exponentiation.
+    \begin{itemize}
+        \item The matrix exponential \(e^A\) for a square matrix \(A\) is defined via the Taylor series:
+        \[
+        e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!},
+        \]
+        where:
+        \begin{itemize}
+            \item \(A^0 = I\), the identity matrix.
+            \item \(A^k = A \cdot A \cdot \ldots \cdot A\) (\(k\) times).
+        \end{itemize}
+        \item This expansion generalizes the scalar exponential function to matrices and always converges for square matrices.
+    \end{itemize}
+\end{itemize}
+
+\end{document}
